@@ -105,19 +105,33 @@ def extract_svg_paths(svg_filename):
 
     return path_data
 
-
-# Usage Example
-if __name__ == "__main__":
-    # 1. Extract paths from SVG file
-    # svg_filename = "input.svg"
-    svg_filename = "test_polygon1.svg"
-    path_strings = extract_svg_paths(svg_filename)
+def getPolygonFromPath(filePath):
+    path_strings = extract_svg_paths(filePath)
     print("path_strings len:", len(path_strings))
     # 2. Convert each path to polygons
     all_polygons = []
     for path_str in path_strings:
         polygons = svg_path_to_polygons(path_str, samples_per_curve=20)
         all_polygons.extend(polygons)
+    # 3. Output results
+    # print(f"Found {len(all_polygons)} polygons in {filePath}")
+    return all_polygons
+
+# Usage Example
+if __name__ == "__main__":
+    # 1. Extract paths from SVG file
+    # svg_filename = "input.svg"
+    svg_filename = "test_polygon1.svg"
+    # svg_filename = "./testSVG/test_polygon2.svg"
+    # path_strings = extract_svg_paths(svg_filename)
+    # print("path_strings len:", len(path_strings))
+    # # 2. Convert each path to polygons
+    # all_polygons = []
+    # for path_str in path_strings:
+    #     polygons = svg_path_to_polygons(path_str, samples_per_curve=20)
+    #     all_polygons.extend(polygons)
+
+    all_polygons = getPolygonFromPath(svg_filename)
 
     # 3. Output results
     print(f"Found {len(all_polygons)} polygons in {svg_filename}")
