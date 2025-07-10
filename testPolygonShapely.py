@@ -1,7 +1,7 @@
 import numpy as np
 from shapely.geometry import LinearRing, Polygon
 import matplotlib.pyplot as plt
-from  testSVG.test0 import extract_svg_paths, svg_path_to_polygons, getPolygonFromPath
+from  testSVG.polygon import extract_svg_paths, svg_path_to_polygons, getPolygonFromPath
 
 # distance    = 0.2
 # cap_style   = 2  # 1 (round), 2 (flat), 3 (square)
@@ -31,7 +31,7 @@ print("after type(polygon_np):", type(polygon_np), "polygon_np:", polygon_np)
 print("after polygon_np[:,0]:", polygon_np[:,0])
 
 polygon_shapely = Polygon(LinearRing(polygon_np))
-# buffer 后得到的是闭环的结果，即第一个点和最后一个点相同
+# buffer 后得到的是闭环的结果，即第一个点和最后一个点相同 https://blog.csdn.net/weixin_45205097/article/details/140991541
 polygon_dilated_np = np.array(polygon_shapely.buffer(
     distance, cap_style=cap_style, join_style=join_style, mitre_limit=mitre_limit).exterior.coords)
 polygon_shrunk_np = np.array(polygon_shapely.buffer(

@@ -1,8 +1,9 @@
 # https://blog.csdn.net/sinat_29018995/article/details/123832684
+#效果不是很清晰
 import cv2
 import numpy as np
 from queue import Queue  # 队列
-from  testSVG.test0 import getPolygonFromPath
+from  testSVG.polygon import getPolygonFromPath
 from skimage.draw import polygon
 maxhigh = 255  # 水位
 mask = -2  # 用于标记每次涨水时，将会被水淹没的像素

@@ -2,7 +2,7 @@ import numpy as np
 from skimage.morphology import skeletonize, thin, medial_axis
 from skimage.draw import polygon
 import matplotlib.pyplot as plt
-from  testSVG.test0 import extract_svg_paths, svg_path_to_polygons
+from  testSVG.polygon import extract_svg_paths, svg_path_to_polygons
 
 def testSkeletonPolygon():
     # Create a polygon (example: a rectangle)

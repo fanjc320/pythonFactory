@@ -1,6 +1,12 @@
+import matplotlib
 from svg.path import parse_path
 from svg.path.path import Line, CubicBezier, QuadraticBezier, Arc
+import numpy as np
+from skimage.draw import polygon
+import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 
+matplotlib.rc("font",family='MicroSoft YaHei',weight="bold")
 
 def path_to_polygon(path_string, npoints=100):
     path = parse_path(path_string)
@@ -116,6 +122,65 @@ def getPolygonFromPath(filePath):
     # 3. Output results
     # print(f"Found {len(all_polygons)} polygons in {filePath}")
     return all_polygons
+
+def getPolygonGrayImgFromPath(svg_filename):
+    path_strings = extract_svg_paths(svg_filename)
+    print("path_strings len:", len(path_strings))
+    # 2. Convert each path to polygons
+    all_polygons = []
+    for path_str in path_strings:
+        polygons = svg_path_to_polygons(path_str, samples_per_curve=20)
+        all_polygons.extend(polygons)
+    # 3. Output results
+    print(f"Found {len(all_polygons)} polygons in {svg_filename}")
+    print("all_polygons[0]:", all_polygons[0])
+    # print("all_polygons.shape:", all_polygons[0].shape)'list' object has no attribute 'shape'
+
+    x_coords = [point[0] for point in all_polygons[0]]
+    y_coords = [point[1] for point in all_polygons[0]]
+
+    # Create a binary image with the polygon filled
+    img = np.zeros((1200, 1200), dtype=np.uint8)
+    rr, cc = polygon(x_coords, y_coords, img.shape)
+    img[rr, cc] = 255
+    return img
+
+
+def plot_polygon(points):
+    """可视化多边形及其拐点"""
+    x, y = zip(*points)
+    plt.figure()
+    plt.plot(x + (x[0],), y + (y[0],), 'b-')  # 闭合多边形
+    plt.plot(x, y, 'ro')  # 标记拐点
+    for i, (xi, yi) in enumerate(points):
+        plt.text(xi, yi, f'{i}', color='green')
+    plt.axis('equal')
+    plt.show()
+
+
+def check_concave_convex(polygon_points):
+    """检测多边形拐点的凹凸性"""
+    n = len(polygon_points)
+    if n < 3:
+        return []
+
+    results = []
+    for i in range(n):
+        p0 = polygon_points[(i - 1) % n]
+        p1 = polygon_points[i]
+        p2 = polygon_points[(i + 1) % n]
+
+        # 计算叉积
+        cross = (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p1[1] - p0[1]) * (p2[0] - p0[0])
+
+        if cross < 0:
+            results.append((p1, "凸点"))
+        elif cross > 0:
+            results.append((p1, "凹点"))
+        else:
+            results.append((p1, "共线"))
+
+    return results
 
 # Usage Example
 if __name__ == "__main__":
