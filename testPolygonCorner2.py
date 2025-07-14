@@ -1,6 +1,7 @@
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
+from testSVG.polygon import getPolygonFromPath
 matplotlib.rc("font",family='MicroSoft YaHei',weight="bold")
 
 def calculate_curvature_and_convexity(points, k=3):
@@ -100,6 +101,13 @@ points = np.array([
     [4, 1], [3.5, 1.5], [3, 1.2], [2.5, 1.5],  # 右侧凹部
     [2, 1], [1.5, 1.5], [1, 1], [0.5, 1.3], [0, 1]  # 顶部波浪
 ])
+
+all_polygons = getPolygonFromPath("./testSVG/test_polygon2.svg")
+polygon_np = all_polygons[0]
+print("before polygon_np:", polygon_np)
+# polygon_np = [list(t) for t in polygon_np]
+polygon_np = np.array(polygon_np)
+points = polygon_np
 
 # 计算曲率和凹凸性
 curvatures, convexities, turning_angles = calculate_curvature_and_convexity(points)
