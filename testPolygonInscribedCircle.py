@@ -21,7 +21,7 @@ def testInscribedCircle():
     # 绘制结果
     plt.imshow(img, cmap='gray')
     circle = plt.Circle((center[1], center[0]), radius, color='r', fill=False)
-    plt.gca().add_patch(circle)
+    plt.gca().add_patch(circle)#https://juejin.cn/post/7158705972410581006
     plt.title(f'Maximum Inscribed Circle (Radius: {radius:.1f})')
     plt.show()
 

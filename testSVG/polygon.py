@@ -182,6 +182,14 @@ def check_concave_convex(polygon_points):
 
     return results
 
+def plot_polygon(polygon, color='blue', alpha=0.5):
+    """Plot a polygon with given color and transparency."""
+    x, y = polygon.exterior.xy#https://geek-docs.com/python/python-ask-answer/738_python_extract_pointscoordinates_from_a_polygon_in_shapely.html
+    plt.fill(x, y, color=color, alpha=alpha)
+    # plt.plot(x, y, color='black')
+    plt.plot(x, y, color='cyan')
+
+
 # Usage Example
 if __name__ == "__main__":
     # 1. Extract paths from SVG file
