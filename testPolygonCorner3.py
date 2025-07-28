@@ -89,8 +89,6 @@ def triangle_in_polygon(triangle, polygon):#triangle type [(2, 2), (5, 2), (3, 5
                  (triangle[2], triangle[0])]
 
     n = len(polygon)
-    poly_edges = [(polygon[i], polygon[(i + 1) % n]) for i in range(n)]
-
 
     for tri_edge in tri_edges:
         print("triangle_in_polygon before tri_edge:{} polygon:{}".format(tri_edge, polygon))
@@ -262,7 +260,7 @@ if __name__ == "__main__":
     all_polygons = getPolygonFromPath("./testSVG/test_polygon2.svg")
     polygon_np = all_polygons[0]
     print("before polygon_np:", polygon_np)
-    # concave_poly = Polygon(polygon_np)
+    concave_poly = Polygon(polygon_np) #########
     print("after polygon_np:", polygon_np)
 
     # Decompose it
