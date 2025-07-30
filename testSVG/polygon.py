@@ -123,6 +123,23 @@ def getPolygonFromPath(filePath):
     # print(f"Found {len(all_polygons)} polygons in {filePath}")
     return all_polygons
 
+def getFirstPolygonFromPath1(filePath):
+    all_polygons = getPolygonFromPath(filePath)
+    polygon_np = all_polygons[0]
+    # polygon_np.append(polygon_np[0])  # make length even #[()]
+    print("polygon_np,type:", type(polygon_np), "polygon_np:", polygon_np)
+    return polygon_np # [[]]
+
+def getFirstPolygonFromPath2(filePath, mustBeEven = False):
+    all_polygons = getPolygonFromPath(filePath)
+    polygon_np = all_polygons[0]
+    if mustBeEven and len(polygon_np) % 2 != 0:
+        polygon_np.append(polygon_np[0])
+    polygon_np_converted = [list(inner_tuple) for inner_tuple in polygon_np]  # [[]]
+    polygon_np_converted = np.array(polygon_np_converted)
+    print("polygon_np_converted,type:", type(polygon_np_converted), "polygon_np_converted:", polygon_np_converted)
+    return polygon_np
+
 def getPolygonGrayImgFromPath(svg_filename):
     path_strings = extract_svg_paths(svg_filename)
     print("path_strings len:", len(path_strings))

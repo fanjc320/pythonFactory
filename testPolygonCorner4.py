@@ -34,8 +34,8 @@ def decompose_concave_to_convex(polygon):
 points = [(0, 0), (2, 0), (1, 1), (2, 2), (0, 2)]  # Concave polygon (diamond with dent)
 poly = Polygon(points)
 
-# all_polygons = getPolygonFromPath("./testSVG/test_polygon2.svg")
-all_polygons = getPolygonFromPath("./testSVG/jimeng-little-girl.svg")
+all_polygons = getPolygonFromPath("./testSVG/test_polygon2.svg")
+# all_polygons = getPolygonFromPath("./testSVG/jimeng-little-girl.svg")
 polygon_np = all_polygons[0]
 print("before polygon_np:", polygon_np)
 concave_poly = Polygon(polygon_np)  #########
