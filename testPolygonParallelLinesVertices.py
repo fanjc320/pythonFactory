@@ -190,7 +190,7 @@ def visualize_polygons(polygons):
     """Visualize multiple polygons"""
     plt.figure(figsize=(8, 8))
     colors = ['b', 'r', 'g', 'm', 'c']
-
+    print("visualize_polygons polygons:", polygons)
     for i, poly in enumerate(polygons):
         x = [p[0] for p in poly]
         y = [p[1] for p in poly]
@@ -200,23 +200,23 @@ def visualize_polygons(polygons):
         for j, (px, py) in enumerate(poly[:-1]):  # Skip closing point
             plt.text(px, py, f'v{j + 1}', fontsize=10, ha='right')
 
-    plt.title('Split Polygons', fontsize=14)
+    plt.title('_visualize_polygons', fontsize=14)
     plt.xlabel('X-axis')
     plt.ylabel('Y-axis')
     plt.grid(True, linestyle='--', alpha=0.7)
-    plt.legend()
+    plt.legend("fjc")
     plt.axis('equal')
     plt.show()
 
-def visualize_polygon(poly):
+def visualize_polygon(poly, color='r'):##接受不闭合的，自动闭合
     """Visualize multiple polygons"""
     plt.figure(figsize=(8, 8))
-    colors = ['b', 'r', 'g', 'm', 'c']
-
+    # colors = ['b', 'r', 'g', 'm', 'c']
+    poly.append(poly[0])
     # for i, poly in enumerate(polygons):
     x = [p[0] for p in poly]
     y = [p[1] for p in poly]
-    plt.plot(x, y, linewidth=2)
+    plt.plot(x, y, linewidth=2,color = color)
     # x = [p[0] for p in poly]
         # plt.plot(x, y, f'{colors[i % len(colors)]}-o', label=f'Polygon {i + 1}', linewidth=2)
 
@@ -224,7 +224,7 @@ def visualize_polygon(poly):
     for j, (px, py) in enumerate(poly[:-1]):  # Skip closing point
         plt.text(px, py, f'v{j + 1}', fontsize=10, ha='right')
 
-    plt.title('Polygon', fontsize=14)
+    plt.title('visualize_polygon', fontsize=14)
     plt.xlabel('X-axis')
     plt.ylabel('Y-axis')
     plt.grid(True, linestyle='--', alpha=0.7)
@@ -282,11 +282,17 @@ def connect_polygon_vertices(vertices, max_length=None):
     split_idx = n // 2
     A = vertices[:split_idx]
     B = vertices[split_idx:][::-1]  # Reversed
-
+    print("connect_polygon_vertices split_idx:", split_idx)
     segments = []
     new_points = []
 
-    for a, b in zip(A, B):
+
+    # for a, b in zip(A, B):
+
+    for i, pair in enumerate(zip(A, B)):
+        a = pair[0]
+        b = pair[1]
+        print("connect_polygon_vertices i:", i, " pair:", pair, " a:", a, " b:", b)
         dx = b[0] - a[0]
         dy = b[1] - a[1]
         length = sqrt(dx ** 2 + dy ** 2)
@@ -297,6 +303,7 @@ def connect_polygon_vertices(vertices, max_length=None):
             new_point = (a[0] + dx * ratio, a[1] + dy * ratio)
             new_points.append(new_point)
             segments.append((a, new_point))
+            print("connect_polygon_vertices ")
         else:
             segments.append((a, b))
 
@@ -305,15 +312,21 @@ def connect_polygon_vertices(vertices, max_length=None):
     if new_points:
         # Find insertion points in original vertex list
         insert_indices = []
+        # for i, v in enumerate(vertices):
+        #     print("connect_polygon_vertices test vertices i:", i, " vertice:", v)
         for np in new_points:
+            print("connect_polygon_vertices np:", np)
             for i, (v1, v2) in enumerate(zip(vertices, vertices[1:] + [vertices[0]])):
-                if point_on_segment(np, v1, v2):
+                print("connect_polygon_vertices v1:", v1, " v2:", v2)
+                if point_on_segment(np, v1, v2):# 截断出来的新点，是否在老的顶点v1和v2组成的线段上。如果在，就
+                    print("connect_polygon_vertices point_on_segment i:", i, " np:", np, " v1:", v1, " v2:", v2)
                     insert_indices.append(i + 1)
                     break
 
         # Create new polygons
         if len(insert_indices) == 2:
             idx1, idx2 = sorted(insert_indices)
+            print("connect_polygon_vertices idx1:", idx1, " idx2:", idx2)
             poly1 = vertices[:idx1] + [new_points[0]] + vertices[idx2:]
             poly2 = vertices[idx1:idx2] + [new_points[1]]
             new_polygons = [poly1, poly2]
@@ -371,7 +384,7 @@ def plot_polygons(original, segments, new_points, new_polygons):
                  linewidth=3,
                  label=f'New Polygon {i + 1}')
 
-    plt.title('Polygon Segmentation', fontsize=14)
+    plt.title('Polygon Segmentation _plot_polygons', fontsize=14)
     plt.xlabel('X-axis', fontsize=12)
     plt.ylabel('Y-axis', fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.7)
@@ -383,22 +396,27 @@ def plot_polygons(original, segments, new_points, new_polygons):
 # Example usage
 if __name__ == "__main__":
     # Create a sample polygon (rectangle)
-    vertices = [(0, 0), (2, 0), (2, 3), (0, 3)]
+    vertices = [(0, 0), (2, 0), (2, 3), (0, 3), (0.5, 1.5)]
+    colors = ['b', 'r', 'g', 'm', 'c']
     visualize_polygon(vertices)
     polygon = getFirstPolygonFromPath2("./testSVG/polygon_simple.svg", True)
-    vertices = polygon
+    # vertices = polygon
     print("polygon:", polygon)
     # Process with max_length = 2.5
-    segments, new_points, new_polygons = connect_polygon_vertices(vertices, max_length=2.5)
+    # segments, new_points, new_polygons = connect_polygon_vertices(vertices, max_length=2.5)
+    segments, new_points, new_polygons = connect_polygon_vertices(vertices, max_length=1.0)
 
     print("Original vertices:", vertices)
     print("Segments:")
     for i, seg in enumerate(segments):
         print(f"  {i + 1}: {seg[0]} → {seg[1]}")
     print("New points:", new_points)
-    print("New polygons:")
+    print("New polygons:",new_polygons)
+    polygons_split = []
     for i, poly in enumerate(new_polygons):
-        print(f"  Polygon {i + 1}: {poly}")
-        visualize_polygon(poly)
-
+        print(f"aaaa  Polygon {i + 1}: {poly}")
+        # visualize_polygon(poly, f'{colors[i % len(colors)]}--')
+        polygons_split.append(poly)
+        # visualize_polygon(poly, colors[i % len(colors)])
+    visualize_polygons(polygons_split)
     plot_polygons(vertices, segments, new_points, new_polygons)
