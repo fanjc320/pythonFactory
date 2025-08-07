@@ -207,11 +207,13 @@ def plot_polygon(polygon, color='blue', alpha=0.5):
     plt.plot(x, y, color='cyan')
 
 
+
+
 # Usage Example
 if __name__ == "__main__":
     # 1. Extract paths from SVG file
     # svg_filename = "input.svg"
-    svg_filename = "test_polygon1.svg"
+    svg_filename = "../testSVG/test_polygon1.svg"
     # svg_filename = "./testSVG/test_polygon2.svg"
     # path_strings = extract_svg_paths(svg_filename)
     # print("path_strings len:", len(path_strings))
@@ -220,12 +222,12 @@ if __name__ == "__main__":
     # for path_str in path_strings:
     #     polygons = svg_path_to_polygons(path_str, samples_per_curve=20)
     #     all_polygons.extend(polygons)
-
-    all_polygons = getPolygonFromPath(svg_filename)
-
-    # 3. Output results
-    print(f"Found {len(all_polygons)} polygons in {svg_filename}")
-    for i, polygon in enumerate(all_polygons):
-        print(f"\nPolygon {i + 1} with {len(polygon)} vertices:")
-        for vertex in polygon:
-            print(f"  ({vertex[0]:.2f}, {vertex[1]:.2f})")
+    ###############
+    # all_polygons = getPolygonFromPath(svg_filename)
+    #
+    # # 3. Output results
+    # print(f"Found {len(all_polygons)} polygons in {svg_filename}")
+    # for i, polygon in enumerate(all_polygons):
+    #     print(f"\nPolygon {i + 1} with {len(polygon)} vertices:")
+    #     for vertex in polygon:
+    #         print(f"  ({vertex[0]:.2f}, {vertex[1]:.2f})")

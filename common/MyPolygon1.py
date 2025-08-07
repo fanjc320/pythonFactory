@@ -1,0 +1,186 @@
+### https://chat.deepseek.com/a/chat/s/e761abc6-daad-42c8-80f9-16d2dc229e7a
+# python, polygon, vertices composed by point and indices, then enumerate vertices and print info
+# auto index
+# compose index and vertice as class
+#     class Vertice:
+#         vertice
+#         index
+# given this Polygon with  vertices of this type, split vertices into two sections as a and b equally, keeping initial order of vertices. reverse the order of vertices in b, connect vertices pairing up, so we get several line segments.
+# if the above segments is longer than a fixed number, truncate them, get the new points, get the new vertices, combine with original vertices to compose new polygons, maintain the indices and order of the original vertices
+# line 19, AttributeError: 'dict' object has no attribute'vertices'
+import math
+
+
+class Vertex:
+    def __init__(self, x, y, index=None):
+        self.x = x
+        self.y = y
+        self.index = index if index is not None else -1  # -1 for new vertices
+
+    def distance_to(self, other):
+        return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
+
+    def __repr__(self):
+        return f"Vertex({self.x}, {self.y}, index={self.index})"
+
+
+class Polygon:
+    def __init__(self, vertices):
+        self.vertices = vertices
+        self.indices = [v.index for v in vertices]
+
+    def __repr__(self):
+        return f"Polygon({len(self.vertices)} vertices)"
+
+
+class PolygonProcessor:
+    def __init__(self, polygon, max_length=1.0):
+        self.original_polygon = polygon
+        self.max_length = max_length
+        self.new_vertices = []
+        self.next_new_index = max(v.index for v in polygon.vertices) + 1 if polygon.vertices else 0
+
+    def _truncate_segment(self, v1, v2):
+        """Truncate segment if longer than max_length, return new intermediate vertices"""
+        distance = v1.distance_to(v2)
+        if distance <= self.max_length:
+            return []
+
+        num_segments = math.ceil(distance / self.max_length)
+        segment_length = distance / num_segments
+
+        dx = (v2.x - v1.x) / distance
+        dy = (v2.y - v1.y) / distance
+
+        new_vertices = []
+        for i in range(1, num_segments):
+            x = v1.x + i * segment_length * dx
+            y = v1.y + i * segment_length * dy
+            new_vertex = Vertex(x, y, self.next_new_index)
+            self.next_new_index += 1
+            new_vertices.append(new_vertex)
+
+        return new_vertices
+
+    def process(self):
+        original_vertices = self.original_polygon.vertices
+
+        # Split into two sections
+        split_point = len(original_vertices) // 2
+        a = original_vertices[:split_point]
+        b = original_vertices[split_point:][::-1]  # reversed
+
+        # Process each pair
+        all_new_vertices = []
+        connection_map = []
+
+        for i in range(min(len(a), len(b))):
+            v1 = a[i]
+            v2 = b[i]
+            print("PolygonProcessor process v1:", v1, " v2:", v2)
+            # Get intermediate vertices for this segment
+            intermediate = self._truncate_segment(v1, v2)
+            print("PolygonProcessor intermediate:", intermediate)
+
+            all_new_vertices.extend(intermediate)
+
+            # Store connection info
+            connection_map.append({
+                'from': v1,
+                'to': v2,
+                'intermediate': intermediate
+            })
+
+        self.new_vertices = all_new_vertices
+
+        # Generate new polygons
+        polygons = self._generate_polygons(connection_map)
+        return polygons
+
+    def _generate_polygons(self, connection_map):
+        polygons = []
+
+        for i, connection in enumerate(connection_map):
+            next_i = (i + 1) % len(connection_map)
+            next_connection = connection_map[next_i]
+
+            vertices = [
+                connection['from'],
+                *connection['intermediate'],
+                next_connection['from'],
+                *reversed(next_connection['intermediate'])
+            ]
+
+            polygons.append(Polygon(vertices))
+
+        return polygons
+
+    def visualize(self, polygons):
+        import matplotlib.pyplot as plt
+
+        plt.figure(figsize=(12, 6))
+
+        # Plot original polygon
+        plt.subplot(1, 2, 1)
+        original = self.original_polygon.vertices
+        x = [v.x for v in original] + [original[0].x]
+        y = [v.y for v in original] + [original[0].y]
+        plt.plot(x, y, 'b-', marker='o')
+        for v in original:
+            plt.text(v.x, v.y, f"{v.index}", color='red')
+        plt.title("Original Polygon")
+        plt.grid(True)
+        plt.axis('equal')
+
+        # Plot result
+        plt.subplot(1, 2, 2)
+
+        # Plot original vertices
+        orig_x = [v.x for v in original]
+        orig_y = [v.y for v in original]
+        plt.plot(orig_x, orig_y, 'bo', label='Original vertices')
+
+        # Plot new vertices
+        if self.new_vertices:
+            new_x = [v.x for v in self.new_vertices]
+            new_y = [v.y for v in self.new_vertices]
+            plt.plot(new_x, new_y, 'go', label='New vertices')
+
+        # Plot polygons
+        colors = ['r', 'm', 'c', 'y']
+        for i, poly in enumerate(polygons):
+            x = [v.x for v in poly.vertices] + [poly.vertices[0].x]
+            y = [v.y for v in poly.vertices] + [poly.vertices[0].y]
+            plt.plot(x, y, '-', color=colors[i % len(colors)], label=f'Polygon {i}' if i < 3 else "")
+
+        plt.title("Generated Polygons")
+        plt.grid(True)
+        plt.axis('equal')
+        plt.legend()
+
+        plt.tight_layout()
+        plt.show()
+
+
+# Example usage:
+original_vertices = [
+    Vertex(0, 0, 0),
+    Vertex(2, 0, 1),
+    Vertex(3, 1, 2),
+    Vertex(2, 2, 3),
+    Vertex(0, 2, 4),
+    Vertex(-1, 1, 5)
+]
+
+original_polygon = Polygon(original_vertices)
+processor = PolygonProcessor(original_polygon, max_length=0.8)
+result_polygons = processor.process()
+
+print("Original polygon:", original_polygon)
+print("\nGenerated polygons:")
+for i, poly in enumerate(result_polygons):
+    print(f"Polygon {i}: {poly}")
+    print(f"Vertices: {poly.vertices}")
+    print(f"Indices: {poly.indices}\n")
+
+processor.visualize(result_polygons)
