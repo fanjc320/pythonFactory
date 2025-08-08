@@ -28,6 +28,13 @@ class Vertex:
 
 class Polygon:
     def __init__(self, vertices):
+        id = 0
+        if len(vertices) > 0 and (vertices[0].index is None or vertices[0].index == -1):
+            for vert in vertices:
+                vert.index = id
+                id += 1
+        # for vert in vertices:
+        #     print("Polygon vert index:", vert.index)
         self.vertices = vertices
         self.indices = [v.index for v in vertices]
 
@@ -212,16 +219,7 @@ class PolygonProcessor:
         plt.show()
 
 
-# Example usage:
-# original_vertices = [
-#     Vertex(0, 0, 0),
-#     Vertex(2, 0, 1),
-#     Vertex(3, 1, 2),
-#     Vertex(2, 2, 3),
-#     Vertex(0, 2, 4),
-#     Vertex(-1, 1, 5)
-# ]
-
+#奇数个顶点，会漏掉一个点
 original_vertices = [
     Vertex(0, 0, 0),
     Vertex(1, -0.2, 1),
@@ -232,6 +230,19 @@ original_vertices = [
     Vertex(0, 2, 6),
     Vertex(-0.5, 1.5, 7),
     Vertex(-1, 1, 8)
+]
+
+original_vertices = [
+    Vertex(0, 0),
+    Vertex(1, -0.2),
+    Vertex(2, 0),
+    Vertex(2.5, 0.2),
+    Vertex(3, 1),
+    Vertex(2, 2),
+    Vertex(1, 2.3),
+    Vertex(0, 2),
+    Vertex(-0.5, 1.5),
+    Vertex(-1, 1)
 ]
 
 original_polygon = Polygon(original_vertices)
