@@ -105,7 +105,8 @@ def plot_polygons(
 # Example usage
 if __name__ == "__main__":
     # Example 1: Single polygon
-    square = [(0, 0), (1, 0), (1, 1), (0, 1)]
+    # square = [(0, 0), (1, 0), (1, 1), (0, 1)]
+    square = [(0, 0), (0.5, 0.2), (1.5, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
     plot_polygons(square, fill=True, color='skyblue', title='Single Polygon')
 
     # Example 2: Multiple polygons with labels

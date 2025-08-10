@@ -3,6 +3,81 @@ import matplotlib.pyplot as plt
 from itertools import combinations
 
 
+def segments_intersect(seg1, seg2):
+    """
+    判断两条线段是否相交（不包括端点接触）
+    参数:
+        seg1: 第一条线段，格式 ((x1,y1), (x2,y2))
+        seg2: 第二条线段，格式 ((x3,y3), (x4,y4))
+    返回:
+        bool: 是否相交
+    """
+    (x1, y1), (x2, y2) = seg1
+    (x3, y3), (x4, y4) = seg2
+
+    # 计算方向向量
+    dx1 = x2 - x1
+    dy1 = y2 - y1
+    dx2 = x4 - x3
+    dy2 = y4 - y3
+
+    # 计算分母
+    denominator = dy2 * dx1 - dx2 * dy1
+
+    # 如果分母为0，表示线段平行或共线
+    if denominator == 0:
+        # 检查是否共线且有重叠
+        if (x2 - x1) * (y3 - y1) == (y2 - y1) * (x3 - x1):  # 共线
+            # 检查投影是否有重叠
+            def overlap(a1, a2, b1, b2):
+                return max(a1, a2) >= min(b1, b2) and min(a1, a2) <= max(b1, b2)
+
+            x_overlap = overlap(x1, x2, x3, x4)
+            y_overlap = overlap(y1, y2, y3, y4)
+            return x_overlap and y_overlap
+        return False
+
+    # 计算参数u和v
+    u = (dx2 * (y1 - y3) - dy2 * (x1 - x3)) / denominator
+    v = (dx1 * (y1 - y3) - dy1 * (x1 - x3)) / denominator
+
+    # 检查交点是否在两个线段上
+    return (u > 0 and u < 1 and v > 0 and v < 1)
+
+
+def is_point_in_polygon(point, polygon):
+    """
+    使用射线法判断点是否在多边形内部
+    参数:
+        point: (x,y)格式的点
+        polygon: 多边形顶点列表
+    返回:
+        bool: 点是否在多边形内部
+    """
+    x, y = point
+    n = len(polygon)
+    inside = False
+
+    for i in range(n):
+        (x1, y1), (x2, y2) = polygon[i], polygon[(i + 1) % n]
+
+        # 检查点是否在顶点上
+        if (x == x1 and y == y1) or (x == x2 and y == y2):
+            return True
+
+        # 检查点是否在水平边上
+        if y1 == y2 == y and min(x1, x2) <= x <= max(x1, x2):
+            return True
+
+        # 检查射线相交
+        if min(y1, y2) < y <= max(y1, y2):
+            x_intersect = (y - y1) * (x2 - x1) / (y2 - y1) + x1
+            if x <= x_intersect:
+                inside = not inside
+
+    return inside
+
+
 def is_concave(polygon, i):
     """检查第i个顶点是否是凹点"""
     n = len(polygon)
@@ -30,35 +105,24 @@ def is_valid_diagonal(polygon, i, j):
     """检查i和j之间的对角线是否有效"""
     n = len(polygon)
     if abs(i - j) % n == 1 or abs(j - i) % n == 1:
-        return False
+        return False  # 相邻顶点
 
     # 检查对角线是否与任何边相交
     diagonal = (polygon[i], polygon[j])
     for k in range(n):
         edge = (polygon[k], polygon[(k + 1) % n])
+        # 跳过与对角线共享顶点的边
         if k != i and k != j and (k + 1) % n != i and (k + 1) % n != j:
             if segments_intersect(diagonal, edge):
                 return False
 
-    # 检查对角线是否完全在多边形内部
+    # 检查对角线的中点是否在多边形内部
     mid_point = ((polygon[i][0] + polygon[j][0]) / 2, (polygon[i][1] + polygon[j][1]) / 2)
     if not is_point_in_polygon(mid_point, polygon):
         return False
 
     return True
 
-def segments_intersect(seg1, seg2):
-    """判断两条线段是否相交"""
-    # 实现线段相交检测算法
-    # 这里简化处理，实际需要完整的几何计算
-    # 可以使用Shamos-Hoey算法或其他方法
-    pass
-
-def is_point_in_polygon(point, polygon):
-    """判断点是否在多边形内部"""
-    # 实现点在多边形内检测算法
-    # 可以使用射线法或winding number算法
-    pass
 
 def split_polygon(polygon, i, j):
     """沿i-j对角线拆分多边形"""
@@ -82,50 +146,43 @@ def generate_all_splits(polygon):
     return splits
 
 
-def recursive_split(polygon, current_decomposition=None, depth=0):
-    print("recursive_split-------- polygon len:", len(polygon))
-    print("recursive_split-------- current_decomposition:", current_decomposition)
-    if depth > 5:
-        print("return max end===============")
+def recursive_split(polygon, current_decomposition=None, depth=0, max_depth=10):
+    """递归拆分多边形，添加深度限制防止无限递归"""
+    if depth > max_depth:
         return [current_decomposition]
-    """递归拆分多边形"""
+
     if current_decomposition is None:
         current_decomposition = [polygon]
-        print("recursive_split--------- current_decomposition =[polygon]", len(current_decomposition))
-    else:
-        print("recursive_split--------- current_decomposition len:", len(current_decomposition))
-
 
     concave_counts = [len(find_concave_vertices(p)) for p in current_decomposition]
-    for cnt in concave_counts:
-        print("recursive_split-------- cnt:", cnt)
     if all(cnt <= 1 for cnt in concave_counts):
-        print("recursive_split-------------  return ----------")
         return [current_decomposition]
 
     decompositions = []
 
     for idx, subpoly in enumerate(current_decomposition):
-        print("for idx:", idx, " subpoly len:", len(subpoly))
         concave_verts = find_concave_vertices(subpoly)
         if len(concave_verts) <= 1:
             continue
 
         splits = generate_all_splits(subpoly)
-        print("generate_all_splits splits len:", len(splits))
         for i, j in splits:
-            print("recursive_split-------------  splits i:{},j:{}".format(i, j))
             new_poly1, new_poly2 = split_polygon(subpoly, i, j)
-            print("recursive_split------split_polygon  len subpoly:{} new_poly1:{} new_poly2:,".format(len(subpoly), len(new_poly1), len(new_poly2)))
             new_decomposition = current_decomposition[:idx] + [new_poly1, new_poly2] + current_decomposition[idx + 1:]
-            decompositions += recursive_split(polygon, new_decomposition, depth + 1)
+
+            # 递归处理新分解
+            new_decomps = recursive_split(polygon, new_decomposition, depth + 1, max_depth)
+            for decomp in new_decomps:
+                # 检查是否已经存在相同的分解
+                if not any(all(p in prev_decomp for p in decomp) for prev_decomp in decompositions):
+                    decompositions.append(decomp)
 
     return decompositions if decompositions else [current_decomposition]
 
 
 def plot_polygon_decomposition(decomposition):
     """绘制多边形分解结果"""
-    plt.figure()
+    plt.figure(figsize=(8, 6))
     colors = plt.cm.tab10.colors
 
     for i, polygon in enumerate(decomposition):
@@ -134,17 +191,18 @@ def plot_polygon_decomposition(decomposition):
         plt.plot(x, y, color=colors[i % len(colors)], linewidth=2)
         plt.fill(x, y, color=colors[i % len(colors)], alpha=0.3)
 
+        # 标注顶点
+        for j, (px, py) in enumerate(polygon):
+            plt.text(px, py, f"{j}", ha='center', va='center',
+                     bbox=dict(facecolor='white', edgecolor='none', alpha=0.7))
+
     plt.axis('equal')
     plt.title(f"分解为{len(decomposition)}个子多边形")
     plt.show()
 
 
 # 示例多边形
-# polygon = [(0, 0), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-# polygon = [(0, 0), (1.5, 0.5), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-# 这个会死循环
 polygon = [(0, 0), (0.5, 0.2), (1.5, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-# polygon = [(0, 0), (1.5, 0.5), (2.5, 0.3), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
 
 # 找出所有可能的分解
 all_decompositions = recursive_split(polygon)
