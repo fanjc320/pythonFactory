@@ -1,7 +1,7 @@
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
-from testSVG.polygon import getPolygonFromPath
+from common.polygon import getPolygonFromPath
 matplotlib.rc("font",family='MicroSoft YaHei',weight="bold")
 
 def calculate_curvature_and_convexity(points, k=3):

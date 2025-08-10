@@ -1,9 +1,8 @@
 import matplotlib
-from matplotlib.font_manager import FontManager
 import numpy as np
 # import matplotlib.pyplot as plt
 from matplotlib import pyplot as plt
-from testSVG.polygon import getPolygonFromPath
+from common.polygon import getPolygonFromPath
 import cv2
 # mpl_fonts = set(f.name for f in FontManager().ttflist)
 # print('all font list get from matplotlib.font_manager:')

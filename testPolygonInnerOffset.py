@@ -1,7 +1,8 @@
-from shapely.geometry import Polygon, LineString
-from shapely.ops import polygonize_full
+from shapely.geometry import Polygon
 import matplotlib.pyplot as plt
-from testSVG.polygon import getPolygonFromPath, plot_polygon
+from common.polygon import getPolygonFromPath
+
+
 def inner_offset_to_line(polygon, distance):
     # Negative buffer (inner offset)
     offset = polygon.buffer(-distance)

@@ -1,7 +1,7 @@
 import numpy as np
 from shapely.geometry import LinearRing, Polygon
 import matplotlib.pyplot as plt
-from  testSVG.polygon import extract_svg_paths, svg_path_to_polygons, getPolygonFromPath
+from common.polygon import getPolygonFromPath
 
 # distance    = 0.2
 # cap_style   = 2  # 1 (round), 2 (flat), 3 (square)

@@ -2,7 +2,9 @@ import numpy as np
 from skimage.morphology import skeletonize
 from skimage import draw
 import matplotlib.pyplot as plt
-from testSVG.polygon import getPolygonFromPath, plot_polygon
+from common.polygon import getPolygonFromPath
+
+
 def polygon_to_mask(polygon, shape=(100, 100)):
     """Convert polygon coordinates to binary mask"""
     mask = np.zeros(shape, dtype=np.uint8)

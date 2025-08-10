@@ -3,8 +3,6 @@
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
-from shapely.geometry import LinearRing, Polygon
-from testSVG.polygon import getPolygonGrayImgFromPath
 
 src = cv2.imread('imgs/coin1.png')
 img = src.copy()

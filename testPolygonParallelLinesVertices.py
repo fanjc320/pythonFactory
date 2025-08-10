@@ -4,12 +4,9 @@
 # visualize
 # if the segments is longer than a fixed number, truncate it , get the new points,  they can form new edge , the new edge split the polygon into two new polygons, get them
 
-import matplotlib.pyplot as plt
-import numpy as np
-from testSVG.polygon import getPolygonFromPath,getFirstPolygonFromPath2
+from common.polygon import getPolygonFromPath,getFirstPolygonFromPath2
 from common.InterplatePolygon import interpolate_polygon_uniformly_noscipy
-import numpy as np
-
+from common.MyPolygon import *
 
 def connect_polygon_vertices(vertices):
     """
@@ -122,10 +119,6 @@ def test_connect_polygon_vertices():
         print(f"Segment {i + 1}: {seg[0]} -- {seg[1]}")
 
     plot_polygon_and_segments(square_vertices, segments)
-
-import matplotlib.pyplot as plt
-import numpy as np
-from math import sqrt
 
 
 def distance(p1, p2):
@@ -259,10 +252,10 @@ def TestSplitPolygon_notFulfill():
 #######################################################
 import matplotlib.pyplot as plt
 import numpy as np
-from math import sqrt, atan2
+from math import sqrt
 
 
-def connect_polygon_vertices(vertices, max_length=None):
+def connect_polygon_vertices(verticesss, max_length=None):
     """
     Split polygon vertices and connect segments, optionally truncating long segments.
 
@@ -275,20 +268,23 @@ def connect_polygon_vertices(vertices, max_length=None):
         new_points: List of new points created from truncation
         new_polygons: List of new polygons formed by splitting
     """
-    n = len(vertices)
+    poly = Polygon(verticesss)
+    n = len(poly.vertices)
     if n % 2 != 0:
         raise ValueError("Number of vertices must be even for equal splitting")
 
     split_idx = n // 2
-    A = vertices[:split_idx]
-    B = vertices[split_idx:][::-1]  # Reversed
+
+
+    A = poly.vertices[:split_idx]
+    B = poly.vertices[split_idx:][::-1]  # Reversed
     print("connect_polygon_vertices split_idx:", split_idx)
     segments = []
     new_points = []
 
 
     # for a, b in zip(A, B):
-
+    mat = []
     for i, pair in enumerate(zip(A, B)):
         a = pair[0]
         b = pair[1]

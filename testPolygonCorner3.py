@@ -3,8 +3,7 @@ import numpy as np
 from shapely.geometry import Polygon, LineString, MultiPolygon
 import matplotlib.pyplot as plt
 from scipy.spatial import Delaunay
-from testSVG.polygon import getPolygonFromPath
-from common.SegmentsIntersect import segments_intersect
+from common.polygon import getPolygonFromPath
 from common.Polygon_Segment import is_line_inside_polygon
 
 def decompose_concave_polygon(polygon):

@@ -1,7 +1,6 @@
 from shapely.geometry import Polygon
 import numpy as np
-import matplotlib.pyplot as plt
-from testSVG.polygon import getPolygonFromPath, plot_polygon
+from common.polygon import getPolygonFromPath, plot_polygon
 
 
 # 测试

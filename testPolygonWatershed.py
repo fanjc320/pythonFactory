@@ -3,8 +3,7 @@
 import cv2
 import numpy as np
 from queue import Queue  # 队列
-from  testSVG.polygon import getPolygonFromPath
-from skimage.draw import polygon
+
 maxhigh = 255  # 水位
 mask = -2  # 用于标记每次涨水时，将会被水淹没的像素
 watershed = 0  # 用于标记分水岭边缘

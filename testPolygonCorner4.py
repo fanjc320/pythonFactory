@@ -1,7 +1,6 @@
 # deepseek python, concave polygon decomposition
-from shapely.geometry import Polygon
 from shapely.ops import triangulate
-from testSVG.polygon import getPolygonFromPath, plot_polygon
+from common.polygon import getPolygonFromPath, plot_polygon
 import matplotlib.pyplot as plt
 from shapely.geometry import Polygon, LineString
 from common.Polygon_Segment import is_line_inside_polygon
