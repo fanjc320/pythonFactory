@@ -4,7 +4,7 @@ from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon as MplPolygon
 import numpy as np
 
-
+#fill polygon with colors same to svg
 def get_svg_polygons_with_colors(svg_file, tolerance=0.1):
     """
     Extract polygons with their original colors from SVG

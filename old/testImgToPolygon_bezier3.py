@@ -53,4 +53,4 @@ def edge_based_bezier(image_path, threshold1=100, threshold2=200, smoothness=0.1
 # edge_based_bezier('input.jpg', threshold1=50, threshold2=150, smoothness=0.15)
 # edge_based_bezier('imgs/jimeng-mengnalisha1.png', threshold1=15, threshold2=100, smoothness=0.05)
 # edge_based_bezier('imgs/jimeng-bunny1.jpeg', threshold1=15, threshold2=100, smoothness=0.05)
-edge_based_bezier('imgs/jimeng-girl1.jpeg', threshold1=15, threshold2=100, smoothness=0.05)
+edge_based_bezier('../imgs/jimeng-girl1.jpeg', threshold1=15, threshold2=100, smoothness=0.05)

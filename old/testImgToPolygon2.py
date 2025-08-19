@@ -1,10 +1,10 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.spatial import Voronoi, voronoi_plot_2d
+from scipy.spatial import Delaunay
 
 
-def image_to_voronoi(image_path, points_count=100):
+def image_to_triangles(image_path, points_count=100):
     # 读取图像
     img = cv2.imread(image_path)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -23,26 +23,23 @@ def image_to_voronoi(image_path, points_count=100):
 
     # 添加图像四个角点
     h, w = gray.shape
-    corners = np.array([[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]],
-                       dtype=np.float32)
+    corners = np.array([[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]], dtype=np.float32)
     points = np.vstack([points, corners])
 
-    # 计算Voronoi图
-    vor = Voronoi(points)
+    # Delaunay三角剖分
+    tri = Delaunay(points)
 
-    return vor
+    return points, tri.simplices
 
 
 # 使用示例
-# vor = image_to_voronoi('input.jpg', points_count=200)
-vor = image_to_voronoi('imgs/jimeng-mengnalisha1.png', points_count=200)
+# points, triangles = image_to_triangles('input.jpg', points_count=200)
+points, triangles = image_to_triangles('../imgs/jimeng-mengnalisha1.png', points_count=200)
 
 # 可视化结果
 # img = cv2.imread('input.jpg')
-img = cv2.imread('imgs/jimeng-mengnalisha1.png')
+img = cv2.imread('../imgs/jimeng-mengnalisha1.png')
 plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-plt.plot(vor.points[:, 0], vor.points[:, 1], 'r.', markersize=2)
-
-# 正确使用voronoi_plot_2d
-fig = voronoi_plot_2d(vor, show_points=False, show_vertices=False, line_width=0.5)
+plt.triplot(points[:, 0], points[:, 1], triangles, 'g-', linewidth=0.5, alpha=0.7)
+plt.plot(points[:, 0], points[:, 1], 'r.', markersize=2)
 plt.show()

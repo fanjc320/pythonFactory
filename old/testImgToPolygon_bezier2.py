@@ -61,4 +61,4 @@ def superpixel_bezier(image_path, n_segments=100, compactness=10, smoothness=0.1
 
 # 使用示例
 # superpixel_bezier('input.jpg', n_segments=150, compactness=20, smoothness=0.2)
-superpixel_bezier('imgs/jimeng-mengnalisha1.png', n_segments=150, compactness=20, smoothness=0.2)
+superpixel_bezier('../imgs/jimeng-mengnalisha1.png', n_segments=150, compactness=20, smoothness=0.2)

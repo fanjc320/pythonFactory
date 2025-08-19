@@ -67,4 +67,4 @@ def color_segmentation_bezier(image_path, num_colors=5, smoothness=0.1):
 
 # 使用示例
 # color_segmentation_bezier('input.jpg', num_colors=5, smoothness=0.05)
-color_segmentation_bezier('imgs/jimeng-mengnalisha1.png', num_colors=10, smoothness=0.1)
+color_segmentation_bezier('../imgs/jimeng-mengnalisha1.png', num_colors=10, smoothness=0.1)

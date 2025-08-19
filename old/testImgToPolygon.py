@@ -35,11 +35,11 @@ def image_to_polygons(image_path, epsilon=0.01, min_area=100):
 
 # 使用示例
 # polygons = image_to_polygons('input.jpg', epsilon=0.02, min_area=50)
-polygons = image_to_polygons('imgs/jimeng_mengnalisha.png', epsilon=0.02, min_area=50)
+polygons = image_to_polygons('../imgs/jimeng_mengnalisha.png', epsilon=0.02, min_area=50)
 
 # 可视化结果
 # img = cv2.imread('input.jpg')
-img = cv2.imread('imgs/jimeng_mengnalisha.png')
+img = cv2.imread('../imgs/jimeng_mengnalisha.png')
 for poly in polygons:
     pts = np.array(poly, np.int32)
     pts = pts.reshape((-1, 1, 2))
