@@ -72,8 +72,11 @@ def extract_polygons_with_colors(svg_file, tolerance=0.1):
         for segment in path:
             if segment.length() == 0:
                 continue
-
             n_segments = max(2, int(segment.length() / tolerance))
+            path_len = len(path)
+            print("extract_polygons_with_colors segment.length():", segment.length(), " n_segments:", n_segments," path_len:",path_len)
+            if path_len < 10:
+                n_segments = 100 # 视觉上没啥进步
             for t in np.linspace(0, 1, n_segments):
                 point = segment.point(t)
                 polyline.append((point.real, point.imag))

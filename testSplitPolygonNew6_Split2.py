@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 from rdp import rdp
 matplotlib.use('Qt5Agg')
-from testSplitPolygonNew6_StraightLineOk_manyPolys import *
+from testSplitPolygonNew6_Split1 import *
 def simplify_polygon(polygon, max_vertices=100, tolerance=0.1):
     """
     Simplify polygon using Douglas-Peucker algorithm and smoothing

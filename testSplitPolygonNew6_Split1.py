@@ -248,7 +248,7 @@ def visualize_with_similar_colors(svg_file, custom_palette):
     """
     # Extract polygons with original colors
     # colored_polygons = extract_polygons_with_colors(svg_file, 1)
-    colored_polygons = extract_polygons_with_colors(svg_file, 10)
+    colored_polygons = extract_polygons_with_colors(svg_file, 20)
     print("visualize_with_similar_colors colored_polygons type:", type(colored_polygons), " len:", len(colored_polygons))
     print("----------------------------------colored_polygons:", colored_polygons[:2])
     count =0
