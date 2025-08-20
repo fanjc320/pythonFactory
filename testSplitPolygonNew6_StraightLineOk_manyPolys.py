@@ -164,10 +164,11 @@ def recursive_split(polygon, threshold=160, current_decomposition=None, depth=0,
         return [current_decomposition]
 
     if current_decomposition is None:
+        print("recursive_split current_decomposition is None")
         current_decomposition = [polygon]
 
     concave_counts = [len(find_concave_vertices(p, threshold)) for p in current_decomposition]
-    print("recursive_split len concave_counts:", len(concave_counts))
+    print("recursive_split len concave_counts:", len(concave_counts), " depth:", depth)
     if all(cnt <= 1 for cnt in concave_counts):
         return [current_decomposition]
 
@@ -211,8 +212,9 @@ def plot_polygon_decomposition(decomposition, threshold=160):
             p1 = polygon[j]
             p2 = polygon[(j + 1) % len(polygon)]
             angle, _ = calculate_angle(p0, p1, p2)
-            plt.text(px, py, f"{j}\n{angle:.1f}°", ha='center', va='center',
-                     bbox=dict(facecolor='white', edgecolor='none', alpha=0.7))
+
+            # plt.text(px, py, f"{j}\n{angle:.1f}°", ha='center', va='center',
+            #          bbox=dict(facecolor='white', edgecolor='none', alpha=0.7))
 
     plt.axis('equal')
     plt.title(f"凹角阈值={threshold}° 分解为{len(decomposition)}个子多边形")
@@ -245,7 +247,8 @@ def visualize_with_similar_colors(svg_file, custom_palette):
     Process SVG and visualize with original colors replaced by similar palette colors
     """
     # Extract polygons with original colors
-    colored_polygons = extract_polygons_with_colors(svg_file, 1)
+    # colored_polygons = extract_polygons_with_colors(svg_file, 1)
+    colored_polygons = extract_polygons_with_colors(svg_file, 10)
     print("visualize_with_similar_colors colored_polygons type:", type(colored_polygons), " len:", len(colored_polygons))
     print("----------------------------------colored_polygons:", colored_polygons[:2])
     count =0

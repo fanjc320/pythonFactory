@@ -150,8 +150,18 @@ def parse_svg_color(color_str):
 
 # Example usage
 svg_file = "testSVG/jimeng-little-girl.svg"
-colored_polygons = extract_polygons_with_colors(svg_file)
+# colored_polygons = extract_polygons_with_colors(svg_file, 1)
+# colored_polygons = extract_polygons_with_colors(svg_file, 10)
+# colored_polygons = extract_polygons_with_colors(svg_file, 20)
+# colored_polygons = extract_polygons_with_colors(svg_file, 200)
+colored_polygons = extract_polygons_with_colors(svg_file, 20)
+print("colored_polygons type:", type(colored_polygons), " len:", len(colored_polygons))#type: <class 'list'>  len: 51
+# print("colored_polygons:", colored_polygons[0][0])
+#extract_polygons_with_colors tolerence->len 1->5197,10->515,20->256, 200->28 变形了
+print("colored_polygons  00 len:", len(colored_polygons[0][0]))
+
 visualize_colored_polygons(colored_polygons)  # Original colors
+
 visualize_colored_polygons(colored_polygons, palette=[
     '#FF0000', '#FF7F00', '#FFFF00', '#7FFF00', '#00FF00',
     '#00FF7F', '#00FFFF', '#007FFF', '#0000FF', '#7F00FF'
