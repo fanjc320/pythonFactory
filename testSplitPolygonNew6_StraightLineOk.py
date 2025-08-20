@@ -1,3 +1,4 @@
+# deepseek python, svg file to polygons
 import numpy as np
 import matplotlib.pyplot as plt
 from itertools import combinations
