@@ -19,10 +19,13 @@ def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10
     paths, attributes = svg2paths(svg_file)
     colored_polygons = []
 
-    for path, attr in zip(paths, attributes):
+    for i, (path, attr) in enumerate(zip(paths, attributes)):
         # Get fill color with fallback to stroke then default
         fill_color = attr.get('fill', attr.get('stroke', '#000000'))
-        path_name = attr.get('class')
+        path_name = attr.get('id', f'path_{i}')
+        if 'id' not in attr:
+            print(f"Path {i} has no ID, using generated name: {path_name}")
+            # path_name = attr.get('class')
         hex_color = parse_svg_color(fill_color)
 
         # Convert path to polygon
@@ -40,17 +43,17 @@ def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10
                 polyline.append((point.real, point.imag))
 
         if polyline and len(polyline) > 2 and hex_color:
-            colored_polygons.append((polyline, hex_color))
+            colored_polygons.append((polyline, hex_color, path_name))
             #简化太严重，不平滑，暂时注释掉
             # try:
             #     simplified = simplify_polygon(polyline, max_vertices)
             #     if len(simplified) >= 3:  # Ensure it's a valid polygon
-            #         colored_polygons.append((simplified, hex_color))
+            #         colored_polygons.append((simplified, hex_color, path_name))
             #         print(f"Path len {len(polyline)} → {len(simplified)} vertices")
             # except Exception as e:
             #     # print(f"Error simplifying path {i}: {e}")
             #     # Fallback: use original polyline if simplification fails
-            #     colored_polygons.append((polyline, hex_color))
+            #     colored_polygons.append((polyline, hex_color, path_name))
 
     return colored_polygons
 
@@ -70,7 +73,7 @@ def visualize_colored_polygons(colored_polygons, palette=None, title="SVG Polygo
 
     color_usage = defaultdict(int)
 
-    for i, (polygon, orig_color) in enumerate(colored_polygons):
+    for i, (polygon, orig_color, path_name) in enumerate(colored_polygons):
         fill_color = color_palette[i % len(color_palette)] if palette else orig_color
         color_usage[fill_color] += 1
         label = f"Polygon {i + 1} ({fill_color})"
