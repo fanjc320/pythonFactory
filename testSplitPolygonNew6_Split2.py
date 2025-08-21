@@ -95,31 +95,29 @@ def visualize_polygons(polygons, title="Simplified Polygons"):
 if __name__ == "__main__":
     plt.close('all')
     # Example usage
-    svg_file = "testSVG/jimeng-little-girl.svg"
+    # svg_file = "testSVG/jimeng-little-girl.svg"
+    svg_file = "testSVG/test_polygon6.svg"
     simplified_polygons = process_svg(svg_file, max_vertices=100)
-    print(f"Reduced to {len(simplified_polygons)} polygons")
+    print(f"Reduced to {len(simplified_polygons)} polygons  type:{type(simplified_polygons)}")
     for i, poly in enumerate(simplified_polygons):
         print(f"Polygon {i + 1}: {len(poly)} vertices")
 
-    visualize_polygons(simplified_polygons)
+    # visualize_polygons(simplified_polygons) # 会阻断执行
 
-    # count = 0
     # for polygon in simplified_polygons:
-    #     if count == 0:
-    #         continue
-    #     if count > 1:
-    #         break
-    #     print("visualize_with_similar_colors polygon type:", type(polygon[0]), " len:", len(polygon[0]), type(polygon[0][0]))
-    #     # simplified, count, tol = rdp_simplify(complex_coords, 0.01, max_points=150)
-    #     # recursive_type_compact(polygon[0])
-    #     print("----------------------------------polygon[0]:", polygon[0][:5]) # [(0.0, 0.0), (0.10001068490223315, 0.0), (0.200021
-    #     print("----------------------------------polygon[1]:", polygon[1][:20]) # #A043CE
-    #     # print("----------------------------------polygon[2]:", polygon[2][:20])#越界了
-    #     all_decompositions = recursive_split(polygon[0], angle_threshold)
-    #     # print("visualize_with_similar_colors all_decompositions:", all_decompositions)
-    #     print("visualize_with_similar_colors len all_decompositions:", len(all_decompositions))
-    #     for i, decomposition in enumerate(all_decompositions):
-    #         print(f"分解方案 {i + 1}:")
-    #         plot_polygon_decomposition(decomposition, angle_threshold)
-    #     ++count
+    for i, polygon in enumerate(simplified_polygons):
+        if i != 0:
+            continue
+        print("visualize_with_similar_colors polygon type:", type(polygon[0]), " len:", len(polygon[0]), type(polygon[0][0]))
+        # simplified, count, tol = rdp_simplify(complex_coords, 0.01, max_points=150)
+        # recursive_type_compact(polygon[0])
+        print("----------------------------------polygon[0]:", polygon[0][:5]) # [(0.0, 0.0), (0.10001068490223315, 0.0), (0.200021
+        print("----------------------------------polygon[1]:", polygon[1][:20]) # #A043CE
+        # print("----------------------------------polygon[2]:", polygon[2][:20])#越界了
+        all_decompositions = recursive_split(polygon[0], angle_threshold)
+        # print("visualize_with_similar_colors all_decompositions:", all_decompositions)
+        print("visualize_with_similar_colors len all_decompositions:", len(all_decompositions))
+        for j, decomposition in enumerate(all_decompositions):
+            print(f"分解方案 {j + 1}:")
+            plot_polygon_decomposition(decomposition, angle_threshold)
 

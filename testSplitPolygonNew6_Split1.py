@@ -27,9 +27,11 @@ def calculate_angle(p0, p1, p2):
 
     # 转换为角度
     angle_deg = np.degrees(angle_rad)
-
+    print("calculate_angle p0:", p0, " p1:", p1, " p2:", p2, " v1:", v1, "v2:", v2)
     # 计算叉积确定方向
     cross = np.cross(v1, v2)
+    # cross = np.cross(-105, -105)
+    # cross = np.cross(105, 105)
 
     return angle_deg, cross > 0
 

@@ -11,51 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from collections import defaultdict
 import re
-# import cssutils
 
-# def parse_svg_color(color_str):
-#     """
-#     Parse SVG color string into hex format
-#     Supports: hex, rgb(), rgba(), named colors, and none/currentColor
-#     """
-#     if not color_str or color_str.lower() in ['none', 'transparent', 'currentcolor']:
-#         return None
-#
-#     # If already in hex format
-#     if re.match(r'^#([a-f0-9]{3}|[a-f0-9]{6})$', color_str, re.IGNORECASE):
-#         return color_str.upper()
-#
-#     # Handle rgb/rgba format
-#     if color_str.startswith(('rgb(', 'rgba(')):
-#         try:
-#             # Use cssutils to parse complex color values
-#             color = cssutils.css.Color(color_str)
-#             return "#%02X%02X%02X" % (color.red, color.green, color.blue)
-#         except:
-#             return None
-#
-#     # Handle named colors (basic set)
-#     named_colors = {
-#         'black': '#000000',
-#         'white': '#FFFFFF',
-#         'red': '#FF0000',
-#         'green': '#00FF00',
-#         'blue': '#0000FF',
-#         'yellow': '#FFFF00',
-#         'cyan': '#00FFFF',
-#         'magenta': '#FF00FF',
-#         'silver': '#C0C0C0',
-#         'gray': '#808080',
-#         'maroon': '#800000',
-#         'olive': '#808000',
-#         'purple': '#800080',
-#         'teal': '#008080',
-#         'navy': '#000080'
-#     }
-#     return named_colors.get(color_str.lower(), None)
-
-
-def extract_polygons_with_colors(svg_file, tolerance=0.1):
+def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10):
     """
     Extract polygons with their colors from SVG
     """
@@ -65,6 +22,7 @@ def extract_polygons_with_colors(svg_file, tolerance=0.1):
     for path, attr in zip(paths, attributes):
         # Get fill color with fallback to stroke then default
         fill_color = attr.get('fill', attr.get('stroke', '#000000'))
+        path_name = attr.get('class')
         hex_color = parse_svg_color(fill_color)
 
         # Convert path to polygon
@@ -72,17 +30,27 @@ def extract_polygons_with_colors(svg_file, tolerance=0.1):
         for segment in path:
             if segment.length() == 0:
                 continue
-            n_segments = max(2, int(segment.length() / tolerance))
-            path_len = len(path)
-            print("extract_polygons_with_colors segment.length():", segment.length(), " n_segments:", n_segments," path_len:",path_len)
-            if path_len < 10:
-                n_segments = 100 # 视觉上没啥进步
-            for t in np.linspace(0, 1, n_segments):
+            # Sample points based on segment length and desired density
+            num_samples  = max(2, int(segment.length() * sampling_density))
+            # print("extract_polygons_with_colors path:", path_name, " segment.length():", segment.length(), " n_segments:", n_segments," path_len:",path_len)
+            num_samples  = 10# 从test_polygon6.svg 三条线的对比得出的经验性结论
+            for t in np.linspace(0, 1, num_samples ):
                 point = segment.point(t)
+                # print("---- segment.point:", point)
                 polyline.append((point.real, point.imag))
 
-        if polyline and hex_color:
+        if polyline and len(polyline) > 2 and hex_color:
             colored_polygons.append((polyline, hex_color))
+            #简化太严重，不平滑，暂时注释掉
+            # try:
+            #     simplified = simplify_polygon(polyline, max_vertices)
+            #     if len(simplified) >= 3:  # Ensure it's a valid polygon
+            #         colored_polygons.append((simplified, hex_color))
+            #         print(f"Path len {len(polyline)} → {len(simplified)} vertices")
+            # except Exception as e:
+            #     # print(f"Error simplifying path {i}: {e}")
+            #     # Fallback: use original polyline if simplification fails
+            #     colored_polygons.append((polyline, hex_color))
 
     return colored_polygons
 
@@ -148,11 +116,47 @@ def parse_svg_color(color_str):
     }
     return named_colors.get(color_str.lower(), '#000000')
 
-# Install required package if needed
-# pip install cssutils
+
+def simplify_polygon(polyline, max_vertices):
+    """
+    Simplify polygon using Douglas-Peucker algorithm or sampling
+    """
+    if len(polyline) <= max_vertices:
+        return polyline
+
+    # Method 1: Simple uniform sampling (fast)
+    if len(polyline) > max_vertices * 2:
+        # Use uniform sampling for very dense polylines
+        indices = np.linspace(0, len(polyline) - 1, max_vertices, dtype=int)
+        return [polyline[i] for i in indices]
+
+    # Method 2: Douglas-Peucker algorithm (more accurate)
+    try:
+        from rdp import rdp
+        epsilon = calculate_epsilon(polyline, max_vertices)
+        return rdp(polyline, epsilon=epsilon)
+    except ImportError:
+        # Fallback: uniform sampling if RDP not available
+        indices = np.linspace(0, len(polyline) - 1, max_vertices, dtype=int)
+        return [polyline[i] for i in indices]
+
+
+def calculate_epsilon(polyline, target_vertices):
+    """
+    Calculate appropriate epsilon for Douglas-Peucker algorithm
+    """
+    # Calculate bounding box dimensions
+    x_coords = [p[0] for p in polyline]
+    y_coords = [p[1] for p in polyline]
+    bbox_width = max(x_coords) - min(x_coords)
+    bbox_height = max(y_coords) - min(y_coords)
+
+    # Use a fraction of the bounding box size
+    return max(bbox_width, bbox_height) * 0.01
 
 # Example usage
 svg_file = "testSVG/jimeng-little-girl.svg"
+# svg_file = "testSVG/test_polygon6.svg"
 # colored_polygons = extract_polygons_with_colors(svg_file, 1)
 # colored_polygons = extract_polygons_with_colors(svg_file, 10)
 # colored_polygons = extract_polygons_with_colors(svg_file, 20)
