@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 from rdp import rdp
 matplotlib.use('Qt5Agg')
-from testSplitPolygonNew6_Split1 import *
+from testSVGtoPolygon2_2 import extract_polygons_with_colors
+from testSplitPolygonNew6_Split1 import recursive_split_new, plot_polygon_decomposition
 def simplify_polygon(polygon, max_vertices=100, tolerance=0.1):
     """
     Simplify polygon using Douglas-Peucker algorithm and smoothing
@@ -95,29 +96,25 @@ def visualize_polygons(polygons, title="Simplified Polygons"):
 if __name__ == "__main__":
     plt.close('all')
     # Example usage
-    # svg_file = "testSVG/jimeng-little-girl.svg"
-    svg_file = "testSVG/test_polygon6.svg"
-    simplified_polygons = process_svg(svg_file, max_vertices=100)
+    svg_file = "testSVG/jimeng-little-girl.svg"
+    # svg_file = "testSVG/test_polygon6.svg"
+    # simplified_polygons = process_svg(svg_file, max_vertices=100)
+    simplified_polygons = extract_polygons_with_colors(svg_file, max_vertices=1000)
     print(f"Reduced to {len(simplified_polygons)} polygons  type:{type(simplified_polygons)}")
     for i, poly in enumerate(simplified_polygons):
         print(f"Polygon {i + 1}: {len(poly)} vertices")
 
     # visualize_polygons(simplified_polygons) # 会阻断执行
 
-    # for polygon in simplified_polygons:
-    for i, polygon in enumerate(simplified_polygons):
-        if i != 0:
+    for i, (polygon, color, path_name) in enumerate(simplified_polygons):
+        if i != 10:
             continue
-        print("visualize_with_similar_colors polygon type:", type(polygon[0]), " len:", len(polygon[0]), type(polygon[0][0]))
-        # simplified, count, tol = rdp_simplify(complex_coords, 0.01, max_points=150)
-        # recursive_type_compact(polygon[0])
-        print("----------------------------------polygon[0]:", polygon[0][:5]) # [(0.0, 0.0), (0.10001068490223315, 0.0), (0.200021
-        print("----------------------------------polygon[1]:", polygon[1][:20]) # #A043CE
-        # print("----------------------------------polygon[2]:", polygon[2][:20])#越界了
-        all_decompositions = recursive_split(polygon[0], angle_threshold)
+        print("visualize_with_similar_colors polygon type:", type(polygon), " len:", len(polygon), type(polygon[0]))
+        print("---------------polygon:", polygon)
+        all_decompositions = recursive_split_new(polygon, 160)
         # print("visualize_with_similar_colors all_decompositions:", all_decompositions)
         print("visualize_with_similar_colors len all_decompositions:", len(all_decompositions))
         for j, decomposition in enumerate(all_decompositions):
             print(f"分解方案 {j + 1}:")
-            plot_polygon_decomposition(decomposition, angle_threshold)
+            plot_polygon_decomposition(decomposition, 160)
 

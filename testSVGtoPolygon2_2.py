@@ -16,46 +16,51 @@ def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10
     """
     Extract polygons with their colors from SVG
     """
-    paths, attributes = svg2paths(svg_file)
-    colored_polygons = []
+    try:
+        paths, attributes = svg2paths(svg_file)
+        colored_polygons = []
 
-    for i, (path, attr) in enumerate(zip(paths, attributes)):
-        # Get fill color with fallback to stroke then default
-        fill_color = attr.get('fill', attr.get('stroke', '#000000'))
-        path_name = attr.get('id', f'path_{i}')
-        if 'id' not in attr:
-            print(f"Path {i} has no ID, using generated name: {path_name}")
-            # path_name = attr.get('class')
-        hex_color = parse_svg_color(fill_color)
+        for i, (path, attr) in enumerate(zip(paths, attributes)):
+            # Get fill color with fallback to stroke then default
+            fill_color = attr.get('fill', attr.get('stroke', '#000000'))
+            path_name = attr.get('id', f'path_{i}')
+            if 'id' not in attr:
+                print(f"Path {i} has no ID, using generated name: {path_name}")
+                # path_name = attr.get('class')
+            hex_color = parse_svg_color(fill_color)
 
-        # Convert path to polygon
-        polyline = []
-        for segment in path:
-            if segment.length() == 0:
-                continue
-            # Sample points based on segment length and desired density
-            num_samples  = max(2, int(segment.length() * sampling_density))
-            # print("extract_polygons_with_colors path:", path_name, " segment.length():", segment.length(), " n_segments:", n_segments," path_len:",path_len)
-            num_samples  = 10# 从test_polygon6.svg 三条线的对比得出的经验性结论
-            for t in np.linspace(0, 1, num_samples ):
-                point = segment.point(t)
-                # print("---- segment.point:", point)
-                polyline.append((point.real, point.imag))
+            # Convert path to polygon
+            polyline = []
+            for segment in path:
+                if segment.length() == 0:
+                    continue
+                # Sample points based on segment length and desired density
+                num_samples  = max(2, int(segment.length() * sampling_density))
+                # print("extract_polygons_with_colors path:", path_name, " segment.length():", segment.length(), " n_segments:", n_segments," path_len:",path_len)
+                num_samples  = 10# 从test_polygon6.svg 三条线的对比得出的经验性结论
+                for t in np.linspace(0, 1, num_samples ):
+                    point = segment.point(t)
+                    # print("---- segment.point:", point)
+                    x = round(point.real, 1)
+                    y = round(point.imag, 1)
+                    polyline.append((x, y))
 
-        if polyline and len(polyline) > 2 and hex_color:
-            colored_polygons.append((polyline, hex_color, path_name))
-            #简化太严重，不平滑，暂时注释掉
-            # try:
-            #     simplified = simplify_polygon(polyline, max_vertices)
-            #     if len(simplified) >= 3:  # Ensure it's a valid polygon
-            #         colored_polygons.append((simplified, hex_color, path_name))
-            #         print(f"Path len {len(polyline)} → {len(simplified)} vertices")
-            # except Exception as e:
-            #     # print(f"Error simplifying path {i}: {e}")
-            #     # Fallback: use original polyline if simplification fails
-            #     colored_polygons.append((polyline, hex_color, path_name))
-
-    return colored_polygons
+            if polyline and len(polyline) > 2 and hex_color:
+                colored_polygons.append((polyline, hex_color, path_name))
+                #简化太严重，不平滑，暂时注释掉
+                # try:
+                #     simplified = simplify_polygon(polyline, max_vertices)
+                #     if len(simplified) >= 3:  # Ensure it's a valid polygon
+                #         colored_polygons.append((simplified, hex_color, path_name))
+                #         print(f"Path {i} {len(polyline)} → {len(simplified)} vertices")
+                # except Exception as e:
+                #     # print(f"Error simplifying path {i}: {e}")
+                #     # Fallback: use original polyline if simplification fails
+                #     colored_polygons.append((polyline, hex_color, path_name))
+        return colored_polygons
+    except Exception as e:
+        print(f"Error processing SVG file: {e}")
+        return []
 
 
 def visualize_colored_polygons(colored_polygons, palette=None, title="SVG Polygons"):
@@ -158,21 +163,22 @@ def calculate_epsilon(polyline, target_vertices):
     return max(bbox_width, bbox_height) * 0.01
 
 # Example usage
-svg_file = "testSVG/jimeng-little-girl.svg"
-# svg_file = "testSVG/test_polygon6.svg"
-# colored_polygons = extract_polygons_with_colors(svg_file, 1)
-# colored_polygons = extract_polygons_with_colors(svg_file, 10)
-# colored_polygons = extract_polygons_with_colors(svg_file, 20)
-# colored_polygons = extract_polygons_with_colors(svg_file, 200)
-colored_polygons = extract_polygons_with_colors(svg_file, 20)
-print("colored_polygons type:", type(colored_polygons), " len:", len(colored_polygons))#type: <class 'list'>  len: 51
-# print("colored_polygons:", colored_polygons[0][0])
-#extract_polygons_with_colors tolerence->len 1->5197,10->515,20->256, 200->28 变形了
-print("colored_polygons  00 len:", len(colored_polygons[0][0]))
+if __name__ == "__main__":
+    svg_file = "testSVG/jimeng-little-girl.svg"
+    # svg_file = "testSVG/test_polygon6.svg"
+    # colored_polygons = extract_polygons_with_colors(svg_file, 1)
+    # colored_polygons = extract_polygons_with_colors(svg_file, 10)
+    # colored_polygons = extract_polygons_with_colors(svg_file, 20)
+    # colored_polygons = extract_polygons_with_colors(svg_file, 200)
+    colored_polygons = extract_polygons_with_colors(svg_file, 20)
+    print("colored_polygons type:", type(colored_polygons), " len:", len(colored_polygons))#type: <class 'list'>  len: 51
+    # print("colored_polygons:", colored_polygons[0][0])
+    #extract_polygons_with_colors tolerence->len 1->5197,10->515,20->256, 200->28 变形了
+    print("colored_polygons  00 len:", len(colored_polygons[0][0]))
 
-visualize_colored_polygons(colored_polygons)  # Original colors
+    visualize_colored_polygons(colored_polygons)  # Original colors
 
-visualize_colored_polygons(colored_polygons, palette=[
-    '#FF0000', '#FF7F00', '#FFFF00', '#7FFF00', '#00FF00',
-    '#00FF7F', '#00FFFF', '#007FFF', '#0000FF', '#7F00FF'
-])  # Custom palette
+    visualize_colored_polygons(colored_polygons, palette=[
+        '#FF0000', '#FF7F00', '#FFFF00', '#7FFF00', '#00FF00',
+        '#00FF7F', '#00FFFF', '#007FFF', '#0000FF', '#7F00FF'
+    ])  # Custom palette

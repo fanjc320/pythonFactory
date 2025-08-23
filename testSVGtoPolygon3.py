@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
 from matplotlib.colors import hex2color
-from testSVGtoPolygon2 import extract_polygons_with_colors
+from testSVGtoPolygon2_2 import extract_polygons_with_colors
 import matplotlib.pyplot as plt
 def find_closest_color(target_hex, palette_hex):
     """
@@ -36,10 +36,10 @@ def visualize_with_similar_colors(svg_file, custom_palette):
     processed_polygons = []
     color_mapping = {}  # Cache color mappings
 
-    for polygon, orig_color in colored_polygons:
+    for polygon, orig_color, path_name in colored_polygons:
         if orig_color not in color_mapping:
             color_mapping[orig_color] = find_closest_color(orig_color, custom_palette)
-        processed_polygons.append((polygon, color_mapping[orig_color]))
+        processed_polygons.append((polygon, color_mapping[orig_color], path_name))
 
     # Visualize with the new colors
     plt.figure(figsize=(12, 10))
@@ -52,7 +52,7 @@ def visualize_with_similar_colors(svg_file, custom_palette):
                                              label=f"{orig} → {new}"))
 
     # Plot all polygons
-    for polygon, color in processed_polygons:
+    for polygon, color, path_name in processed_polygons:
         x, y = zip(*polygon)
         plt.fill(x + (x[0],), y + (y[0],), color, edgecolor='black', linewidth=0.5)
 
