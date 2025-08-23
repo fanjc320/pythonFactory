@@ -1,6 +1,9 @@
 import math
-
-
+from common.polygon_plot_index import draw_polygon_with_labels
+import matplotlib.pyplot as plt
+import numpy as np
+from shapely.geometry import Polygon
+# from shapely.plotting import plot_polygon
 def find_concave_vertices(polygon, threshold=160):
     """
     查找多边形的凹顶点
@@ -11,23 +14,31 @@ def find_concave_vertices(polygon, threshold=160):
 
     for i in range(n):
         # 获取前一个、当前和后一个顶点
-        prev = polygon[(i - 1) % n]
-        curr = polygon[i]
-        next_ = polygon[(i + 1) % n]
+        index_p = (i - 1) % n
+        index_c = i
+        index_n = (i + 1) % n
+        prev = polygon[index_p]
+        curr = polygon[index_c]
+        next_ = polygon[index_n]
+        print(f"polygon:{polygon}")
+        print(f"find_concave_vertices i:{i} ip:{index_p} ic:{index_c} in:{index_n} p:{prev} c:{curr} n:{next_}")
 
         # 计算向量
         v1 = (prev[0] - curr[0], prev[1] - curr[1])
         v2 = (next_[0] - curr[0], next_[1] - curr[1])
 
         # 计算角度
-        angle = calculate_angle(v1, v2)
+        angle = calculate_internal_angle(v1, v2)
+        print(f"find_concave_vertices i:{i} angle:{angle}")
 
-        if angle > threshold:  # 角度大于阈值，认为是凹顶点
+        # if angle > threshold:  # 角度大于阈值，认为是凹顶点
+        #     concave_vertices.append(i)
+        if angle < threshold:  # 角度大于阈值，认为是凹顶点
             concave_vertices.append(i)
-
     return concave_vertices
 
 
+#有bug,可能不是内角的角度
 def calculate_angle(v1, v2):
     """
     计算两个向量之间的角度（0-180度）
@@ -46,6 +57,32 @@ def calculate_angle(v1, v2):
 
     return angle_deg
 
+def calculate_internal_angle(vec1, vec2):
+    # # 计算两个向量
+    # vec1 = (prev[0] - current[0], prev[1] - current[1])
+    # vec2 = (next_v[0] - current[0], next_v[1] - current[1])
+    # 计算点积
+    dot = vec1[0] * vec2[0] + vec1[1] * vec2[1]
+    # 计算向量模长
+    mag1 = math.sqrt(vec1[0] ** 2 + vec1[1] ** 2)
+    mag2 = math.sqrt(vec2[0] ** 2 + vec2[1] ** 2)
+    if mag1 * mag2 == 0:
+        print(f"calculate_internal_angles 共线 vec1:{vec1} vec2:{vec2}")
+        return 0
+    # 计算夹角
+    cos_theta = dot / (mag1 * mag2)
+    cos_theta = max(min(cos_theta, 1.0), -1.0)
+    theta = math.acos(cos_theta)
+    # 计算叉积判断方向
+    cross = vec1[0] * vec2[1] - vec1[1] * vec2[0]
+    # 确定内角
+    # internal_angle = 0
+    if cross >= 0:
+        internal_angle = theta
+    else:
+        internal_angle = 2 * math.pi - theta
+    print(f"calculate_internal_angles internal_angle:{internal_angle} vec1:{vec1} vec2:{vec2} dot:{dot} cos_theta:{cos_theta}:theta:{theta}")
+    return internal_angle
 
 def split_polygon(polygon, i, j):
     """
@@ -387,6 +424,64 @@ def visualize_decomposition(polygon, decomposition):
     except ImportError:
         print("Matplotlib not available for visualization")
 
+def draw_polygon_with_concave(vertices, concave_verts, color='blue', alpha=0.5, label_offset=0.1):
+    """
+    绘制多边形并标注顶点索引
+
+    参数:
+    - vertices: 顶点坐标列表，格式为 [(x1,y1), (x2,y2), ...]
+    - color: 多边形填充颜色
+    - alpha: 多边形透明度
+    - label_offset: 顶点标签偏移量
+    """
+    # 创建图形
+    fig, ax = plt.subplots()
+
+    # 将顶点列表转换为NumPy数组以便处理
+    vertices = np.array(vertices)
+
+    # 绘制多边形
+    polygon = plt.Polygon(vertices, color=color, alpha=alpha)
+    ax.add_patch(polygon)
+
+    # 绘制顶点并标注索引
+    for i, (x, y) in enumerate(vertices):
+        # 绘制顶点
+        ax.plot(x, y, 'ro')
+
+        # 计算标签位置（稍微偏移以避免重叠）
+        offset_x = label_offset if x >= 0 else -label_offset
+        offset_y = label_offset if y >= 0 else -label_offset
+
+        # 标注索引
+        ax.text(x + offset_x, y + offset_y, str(i),
+                fontsize=12, color='black', weight='bold')
+
+    # 突出显示凹顶点（红色）
+    if concave_verts:
+        # concave_array = np.array(concave_verts)
+        # ax.plot(concave_array[:, 0], concave_array[:, 1], 's', color='red',
+        #          markersize=12, markerfacecolor='none', markeredgewidth=3, label='凹顶点')
+        # 标记凹顶点索引
+        for i in concave_verts:
+            vertex = vertices[i]
+            ax.text(vertex[0] + 0.15, vertex[1] + 0.15, str(i), fontsize=14,
+                     fontweight='bold', color='red',
+                     bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.8))
+
+    # 设置坐标轴范围
+    min_x, min_y = np.min(vertices, axis=0)
+    max_x, max_y = np.max(vertices, axis=0)
+    ax.set_xlim(min_x - 1, max_x + 1)
+    ax.set_ylim(min_y - 1, max_y + 1)
+
+    # 设置图形标题
+    ax.set_title('Polygon with Vertex Indices')
+
+    # 显示图形
+    plt.grid(True)
+    plt.axis('equal')  # 保持纵横比一致
+    plt.show()
 
 # 使用示例
 def main():
@@ -395,8 +490,8 @@ def main():
     #     (0, 0), (10, 0), (10, 5), (8, 8), (5, 10),
     #     (2, 8), (0, 5), (0, 0)  # 闭合多边形
     # ]
-    # test_polygon = [(0, 0), (0.5, 0.2), (1.5, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-    test_polygon = [(833.0, 1600.2), (833.2, 1600.2), (833.4, 1600.2), (833.6, 1600.1), (833.8, 1600.1),
+    test_polygon = [(0, 0), (0.5, 0.2), (1.5, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
+    test_polygon1 = [(833.0, 1600.2), (833.2, 1600.2), (833.4, 1600.2), (833.6, 1600.1), (833.8, 1600.1),
                     (834.0, 1600.1), (834.3, 1600.0), (834.5, 1600.0), (834.7, 1599.9), (834.9, 1599.9),
                     (834.9, 1599.9), (835.2, 1600.1), (835.6, 1600.3), (835.9, 1600.5), (836.2, 1600.6),
                     (836.5, 1600.7), (836.9, 1600.8), (837.2, 1600.9), (837.6, 1601.0), (838.0, 1601.1),
@@ -436,13 +531,17 @@ def main():
     print("原始多边形顶点:", test_polygon)
 
     # 查找凹顶点
-    concave_verts = find_concave_vertices(test_polygon, threshold=160)
+    # concave_verts = find_concave_vertices(test_polygon, threshold=160)
+    concave_verts = find_concave_vertices(test_polygon, threshold=4)
     print("凹顶点索引:", concave_verts)
     print("凹顶点坐标:", [test_polygon[i] for i in concave_verts])
-
+    draw_polygon_with_concave(test_polygon, concave_verts, color='skyblue', alpha=0.7)
+    pass
     # 使用迭代版本进行拆分（更安全）
     # decompositions = iterative_split(test_polygon, threshold=160)
-    decompositions = recursive_split(test_polygon, threshold=160)
+    # decompositions = iterative_split(test_polygon, threshold=-0.5)
+    decompositions = iterative_split(test_polygon, threshold=0.5)
+    # decompositions = recursive_split(test_polygon, threshold=160)#容易死循环
 
     print(f"\n找到 {len(decompositions)} 种分解方案")
     for i, decomp in enumerate(decompositions):
