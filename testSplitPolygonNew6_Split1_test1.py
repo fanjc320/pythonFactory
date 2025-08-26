@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from shapely.geometry import Polygon
 # from shapely.plotting import plot_polygon
+import matplotlib
+matplotlib.use('Qt5Agg')
 def find_concave_vertices(polygon, threshold=160):
     """
     查找多边形的凹顶点
@@ -21,7 +23,7 @@ def find_concave_vertices(polygon, threshold=160):
         curr = polygon[index_c]
         next_ = polygon[index_n]
         print(f"polygon:{polygon}")
-        print(f"find_concave_vertices i:{i} ip:{index_p} ic:{index_c} in:{index_n} p:{prev} c:{curr} n:{next_}")
+        # print(f"find_concave_vertices i:{i} ip:{index_p} ic:{index_c} in:{index_n} p:{prev} c:{curr} n:{next_}")
 
         # 计算向量
         v1 = (prev[0] - curr[0], prev[1] - curr[1])
@@ -29,7 +31,7 @@ def find_concave_vertices(polygon, threshold=160):
 
         # 计算角度
         angle = calculate_internal_angle(v1, v2)
-        print(f"find_concave_vertices i:{i} angle:{angle}")
+        # print(f"find_concave_vertices xxxx i:{i} angle:{angle} threshold:{threshold}")
 
         # if angle > threshold:  # 角度大于阈值，认为是凹顶点
         #     concave_vertices.append(i)
@@ -67,8 +69,8 @@ def calculate_internal_angle(vec1, vec2):
     mag1 = math.sqrt(vec1[0] ** 2 + vec1[1] ** 2)
     mag2 = math.sqrt(vec2[0] ** 2 + vec2[1] ** 2)
     if mag1 * mag2 == 0:
-        print(f"calculate_internal_angles 共线 vec1:{vec1} vec2:{vec2}")
-        return 0
+        # print(f"calculate_internal_angles 共线 vec1:{vec1} vec2:{vec2}")
+        return math.pi
     # 计算夹角
     cos_theta = dot / (mag1 * mag2)
     cos_theta = max(min(cos_theta, 1.0), -1.0)
@@ -81,7 +83,7 @@ def calculate_internal_angle(vec1, vec2):
         internal_angle = theta
     else:
         internal_angle = 2 * math.pi - theta
-    print(f"calculate_internal_angles internal_angle:{internal_angle} vec1:{vec1} vec2:{vec2} dot:{dot} cos_theta:{cos_theta}:theta:{theta}")
+    # print(f"calculate_internal_angles internal_angle:{internal_angle} vec1:{vec1} vec2:{vec2} dot:{dot} cos_theta:{cos_theta}:theta:{theta}")
     return internal_angle
 
 def split_polygon(polygon, i, j):
@@ -110,7 +112,7 @@ def split_polygon(polygon, i, j):
     return poly1, poly2
 
 
-def recursive_split(polygon, threshold=160, current_decomposition=None, depth=0, max_depth=10, visited_states=None):
+def recursive_split(polygon, threshold=2.6, current_decomposition=None, depth=0, max_depth=10, visited_states=None):
     """递归拆分多边形，添加状态跟踪防止死循环"""
     if visited_states is None:
         visited_states = set()
@@ -510,44 +512,27 @@ def main():
                     (836.9, 1609.1), (836.9, 1609.2), (836.8, 1609.3), (836.7, 1609.4), (836.6, 1609.5),
                     (836.5, 1609.6), (836.5, 1609.7), (836.4, 1609.8), (836.3, 1609.9), (836.2, 1610.0),
                     (836.2, 1610.0), (836.2, 1610.1), (836.1, 1610.1), (836.0, 1610.2), (836.0, 1610.2),
-                    (835.9, 1610.3), (835.8, 1610.3), (835.7, 1610.4), (835.7, 1610.4), (835.6, 1610.5),
-                    (835.6, 1610.5), (835.1, 1610.8), (834.6, 1611.1), (834.2, 1611.4), (833.8, 1611.6),
-                    (833.4, 1611.8), (833.0, 1611.9), (832.5, 1611.9), (832.0, 1611.9), (831.4, 1611.8),
-                    (831.4, 1611.8), (831.1, 1611.4), (830.9, 1611.0), (830.7, 1610.6), (830.4, 1610.3),
-                    (830.2, 1609.9), (829.9, 1609.6), (829.6, 1609.3), (829.3, 1609.0), (828.9, 1608.7),
-                    (828.9, 1608.7), (828.6, 1608.9), (828.3, 1609.1), (828.0, 1609.2), (827.7, 1609.4),
-                    (827.5, 1609.6), (827.2, 1609.8), (826.9, 1610.0), (826.6, 1610.1), (826.3, 1610.3),
-                    (826.3, 1610.3), (826.3, 1610.2), (826.2, 1610.2), (826.1, 1610.1), (826.0, 1610.0),
-                    (826.0, 1609.9), (825.9, 1609.9), (825.8, 1609.8), (825.8, 1609.7), (825.7, 1609.6),
-                    (825.7, 1609.6), (826.0, 1609.1), (826.3, 1608.5), (826.7, 1607.9), (827.0, 1607.4),
-                    (827.3, 1606.8), (827.6, 1606.2), (827.9, 1605.6), (828.2, 1605.0), (828.5, 1604.4),
-                    (828.5, 1604.4), (828.1, 1604.3), (827.7, 1604.2), (827.3, 1604.0), (826.9, 1603.9),
-                    (826.6, 1603.7), (826.3, 1603.5), (826.0, 1603.3), (825.6, 1603.0), (825.3, 1602.7),
-                    (825.3, 1602.7), (825.7, 1602.3), (826.3, 1601.9), (827.1, 1601.6), (828.0, 1601.4),
-                    (828.9, 1601.2), (829.9, 1601.0), (830.8, 1600.8), (831.6, 1600.6), (832.3, 1600.4),
-                    (832.3, 1600.4), (832.4, 1600.4), (832.5, 1600.4), (832.6, 1600.4), (832.6, 1600.3),
-                    (832.7, 1600.3), (832.8, 1600.3), (832.8, 1600.3), (832.9, 1600.3), (833.0, 1600.2)]
-
+                    (835.9, 1610.3), (835.8, 1610.3), (835.7, 1610.4), (835.7, 1610.4), (835.6, 1610.5)]
     print("原始多边形顶点:", test_polygon)
 
+    threashold_set = 2.6
     # 查找凹顶点
-    # concave_verts = find_concave_vertices(test_polygon, threshold=160)
-    concave_verts = find_concave_vertices(test_polygon, threshold=4)
+    # concave_verts = find_concave_vertices(test_polygon, threshold=math.pi)#ok
+    concave_verts = find_concave_vertices(test_polygon, threshold=threashold_set)#外∠更凹，外∠越小，越凹，angle就越小
     print("凹顶点索引:", concave_verts)
     print("凹顶点坐标:", [test_polygon[i] for i in concave_verts])
     draw_polygon_with_concave(test_polygon, concave_verts, color='skyblue', alpha=0.7)
-    pass
+    # return 0
+    print("-------------------------------------------------------------------------")
     # 使用迭代版本进行拆分（更安全）
-    # decompositions = iterative_split(test_polygon, threshold=160)
-    # decompositions = iterative_split(test_polygon, threshold=-0.5)
-    decompositions = iterative_split(test_polygon, threshold=0.5)
-    # decompositions = recursive_split(test_polygon, threshold=160)#容易死循环
+    # decompositions = iterative_split(test_polygon, threshold=threashold_set)
+    decompositions = recursive_split(test_polygon, threshold=threashold_set)#容易死循环
 
     print(f"\n找到 {len(decompositions)} 种分解方案")
     for i, decomp in enumerate(decompositions):
         print(f"方案 {i + 1}: {len(decomp)} 个子多边形")
         for j, poly in enumerate(decomp):
-            concave_count = len(find_concave_vertices(poly, threshold=160))
+            concave_count = len(find_concave_vertices(poly, threshold=threashold_set))
             print(f"  子多边形 {j + 1}: {len(poly)} 顶点, {concave_count} 凹顶点")
 
     # 可视化第一个分解方案
