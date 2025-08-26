@@ -3,7 +3,8 @@ from matplotlib.patches import Polygon as MplPolygon
 from matplotlib.collections import PatchCollection
 from typing import List, Tuple, Union
 import numpy as np
-
+import matplotlib
+matplotlib.use('Qt5Agg')
 
 def plot_polygons(
         polygons: Union[List[List[Tuple[float, float]]], List[Tuple[float, float]]],

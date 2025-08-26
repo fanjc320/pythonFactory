@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from shapely.geometry import Polygon
 # from shapely.plotting import plot_polygon
+from common.Polygon_Compare import *
 import matplotlib
 matplotlib.use('Qt5Agg')
 def find_concave_vertices(polygon, threshold=160):
@@ -22,7 +23,7 @@ def find_concave_vertices(polygon, threshold=160):
         prev = polygon[index_p]
         curr = polygon[index_c]
         next_ = polygon[index_n]
-        print(f"polygon:{polygon}")
+        # print(f"polygon:{polygon}")
         # print(f"find_concave_vertices i:{i} ip:{index_p} ic:{index_c} in:{index_n} p:{prev} c:{curr} n:{next_}")
 
         # 计算向量
@@ -196,13 +197,13 @@ def generate_promising_splits(polygon, concave_vertices, threshold=160):
     """生成真正有效的拆分线，确保在多边形内部"""
     splits = []
     n = len(polygon)
-    convex_vertices = [i for i in range(n) if i not in concave_vertices]
-
-    # 策略1: 凹顶点与可见凸顶点的连接
-    for concave_idx in concave_vertices:
-        for convex_idx in convex_vertices:
-            if is_valid_split_line(polygon, concave_idx, convex_idx, threshold):
-                splits.append((concave_idx, convex_idx))
+    # convex_vertices = [i for i in range(n) if i not in concave_vertices]
+    #
+    # # 策略1: 凹顶点与可见凸顶点的连接
+    # for concave_idx in concave_vertices:
+    #     for convex_idx in convex_vertices:
+    #         if is_valid_split_line(polygon, concave_idx, convex_idx, threshold):
+    #             splits.append((concave_idx, convex_idx))
 
     # 策略2: 凹顶点之间的连接
     for i in range(len(concave_vertices)):
@@ -485,6 +486,49 @@ def draw_polygon_with_concave(vertices, concave_verts, color='blue', alpha=0.5, 
     plt.axis('equal')  # 保持纵横比一致
     plt.show()
 
+
+def enhanced_evaluate_split_quality(self, split_polygons):
+    """
+    增强的拆分质量评估，包含形状规则性分析
+    """
+    if len(split_polygons) < 2:
+        return {"valid": False, "message": "未成功拆分"}
+
+    areas = [poly.area for poly in split_polygons]
+    total_area = sum(areas)
+
+    # 基础评估
+    area_ratio = min(areas) / max(areas) if max(areas) > 0 else 0
+    area_loss = abs(total_area - self.original_area) / self.original_area
+
+    # 形状规则性评估
+    shape_scores = []
+    shape_details = []
+
+    for poly in split_polygons:
+        regularity = calculate_shape_regularity(poly)
+        shape_scores.append(regularity.get("overall_score", 0))
+        shape_details.append(regularity)
+
+    avg_shape_score = np.mean(shape_scores)
+    min_shape_score = min(shape_scores)
+
+    # 综合评分
+    composite_score = (area_ratio * 0.4 + avg_shape_score * 0.4 +
+                       (1 - area_loss) * 0.2)
+
+    return {
+        "valid": area_loss < 0.01,
+        "area_ratio": area_ratio,
+        "avg_shape_score": avg_shape_score,
+        "min_shape_score": min_shape_score,
+        "area_loss": area_loss,
+        "num_parts": len(split_polygons),
+        "composite_score": composite_score,
+        "shape_details": shape_details,
+        "areas": areas
+    }
+
 # 使用示例
 def main():
     # 创建一个测试多边形（凹多边形）
@@ -527,17 +571,32 @@ def main():
     # 使用迭代版本进行拆分（更安全）
     # decompositions = iterative_split(test_polygon, threshold=threashold_set)
     decompositions = recursive_split(test_polygon, threshold=threashold_set)#容易死循环
-
+    score_sort = []
     print(f"\n找到 {len(decompositions)} 种分解方案")
     for i, decomp in enumerate(decompositions):
-        print(f"方案 {i + 1}: {len(decomp)} 个子多边形")
+        # print(f"decomp:{decomp}")
+        polygons = [Polygon(coords) for coords in decomp]
+        score_overall = get_aggregate_regularity(polygons)
+        print(f"方案 {i + 1}: {len(decomp)} 个子多边形 综合评分:{score_overall}")
+        score_sort.append({
+            "polygon_index": i,
+            "overall_score": score_overall
+        })
         for j, poly in enumerate(decomp):
             concave_count = len(find_concave_vertices(poly, threshold=threashold_set))
             print(f"  子多边形 {j + 1}: {len(poly)} 顶点, {concave_count} 凹顶点")
+    # 按综合评分排序
+    score_sort.sort(key=lambda x: x["overall_score"], reverse=True)
+    # print(f"score_sort:{score_sort}")
+    for score in score_sort:
+        print(f"score:{score}")
 
     # 可视化第一个分解方案
     if decompositions:
-        visualize_decomposition(test_polygon, decompositions[0])
+        # visualize_decomposition(test_polygon, decompositions[26])
+        visualize_decomposition(test_polygon, decompositions[score_sort[0].get("polygon_index")])
+        # for i, decomp in enumerate(decompositions):
+        #     visualize_decomposition(test_polygon, decomp)
 
 
 if __name__ == "__main__":
