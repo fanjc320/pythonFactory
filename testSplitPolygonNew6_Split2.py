@@ -7,7 +7,7 @@ import matplotlib
 from rdp import rdp
 matplotlib.use('Qt5Agg')
 from testSVGtoPolygon2_2 import extract_polygons_with_colors
-from testSplitPolygonNew6_Split1 import recursive_split_new, plot_polygon_decomposition
+from testSplitPolygonNew6_Split1 import recursive_split_new,recursive_split_new1, plot_polygon_decomposition
 def simplify_polygon(polygon, max_vertices=100, tolerance=0.1):
     """
     Simplify polygon using Douglas-Peucker algorithm and smoothing
@@ -107,11 +107,11 @@ if __name__ == "__main__":
     # visualize_polygons(simplified_polygons) # 会阻断执行
 
     for i, (polygon, color, path_name) in enumerate(simplified_polygons):
-        if i != 10:
+        if i != 5:
             continue
         print("visualize_with_similar_colors polygon type:", type(polygon), " len:", len(polygon), type(polygon[0]))
         print("---------------polygon:", polygon)
-        all_decompositions = recursive_split_new(polygon, 160)
+        all_decompositions = recursive_split_new1(polygon, 160)
         # print("visualize_with_similar_colors all_decompositions:", all_decompositions)
         print("visualize_with_similar_colors len all_decompositions:", len(all_decompositions))
         for j, decomposition in enumerate(all_decompositions):

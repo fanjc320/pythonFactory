@@ -10,8 +10,6 @@ from svgpathtools import svg2paths
 import matplotlib.pyplot as plt
 import numpy as np
 from collections import defaultdict
-import re
-
 from svgpathtools import svg2paths
 import re
 
