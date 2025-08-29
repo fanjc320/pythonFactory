@@ -12,23 +12,87 @@ import numpy as np
 from collections import defaultdict
 import re
 
+from svgpathtools import svg2paths
+import re
+
+
+def get_colors_from_css(svg_file):
+    with open(svg_file, 'r') as f:
+        svg_content = f.read()
+
+    # 提取<style>部分
+    style_match = re.search(r'<style[^>]*>(.*?)</style>', svg_content, re.DOTALL)
+    if not style_match:
+        return {}
+
+    style_content = style_match.group(1)
+    color_rules = {}
+
+    # 解析CSS规则
+    for rule in re.finditer(r'\.([^{]+)\s*\{\s*([^}]+)\s*\}', style_content):
+        class_name = rule.group(1).strip()
+        properties = rule.group(2)
+
+        # 提取填充颜色
+        fill_match = re.search(r'fill:\s*([^;]+)', properties)
+        if fill_match:
+            color_rules[class_name] = fill_match.group(1).strip()
+
+    return color_rules
+
+
+def get_path_classes(svg_file):
+    with open(svg_file, 'r') as f:
+        svg_content = f.read()
+
+    # 提取路径及其class属性
+    path_classes = {}
+    for match in re.finditer(r'<path[^>]*class="([^"]+)"[^>]*>', svg_content):
+        path_id = match.group(0).split('id="')[1].split('"')[0] if 'id="' in match.group(0) else None
+        classes = match.group(1).split()
+        path_classes[path_id or f"path_{len(path_classes)}"] = classes
+
+    return path_classes
+
+
+# # 使用示例
+# svg_file = 'testSVG/jimeng-little-girl.svg'
+# color_rules = get_colors_from_css(svg_file)
+# path_classes = get_path_classes(svg_file)
+#
+# # 关联路径和颜色
+# for path_id, classes in path_classes.items():
+#     for cls in classes:
+#         if cls in color_rules:
+#             print(f"路径 {path_id} class:{cls} 颜色: {color_rules[cls]}")
+#             break
+
 def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10):
     """
     Extract polygons with their colors from SVG
     """
     try:
         paths, attributes = svg2paths(svg_file)
+
+        color_rules = get_colors_from_css(svg_file)
+        path_classes = get_path_classes(svg_file)
+
         colored_polygons = []
 
         for i, (path, attr) in enumerate(zip(paths, attributes)):
             # Get fill color with fallback to stroke then default
-            fill_color = attr.get('fill', attr.get('stroke', '#000000'))
+            # fill_color = attr.get('fill', attr.get('stroke', '#000000'))
             path_name = attr.get('id', f'path_{i}')
             if 'id' not in attr:
                 print(f"Path {i} has no ID, using generated name: {path_name}")
-                # path_name = attr.get('class')
-            hex_color = parse_svg_color(fill_color)
 
+            cls = attr.get('class')
+            if cls is None:
+                print(f"no class color path:{path_name}")
+                fill_color = "#000000"
+            else:
+                fill_color = color_rules[cls]
+            hex_color = parse_svg_color(fill_color)
             # Convert path to polygon
             polyline = []
             for segment in path:
@@ -45,8 +109,11 @@ def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10
                     y = round(point.imag, 1)
                     polyline.append((x, y))
 
+
+            print(f"extract_polygons_with_colors polyline:{polyline} path_name:{path_name} hex_color:{hex_color}")
             if polyline and len(polyline) > 2 and hex_color:
                 colored_polygons.append((polyline, hex_color, path_name))
+                print("colored_polygons.append")
                 #简化太严重，不平滑，暂时注释掉
                 # try:
                 #     simplified = simplify_polygon(polyline, max_vertices)
@@ -57,6 +124,7 @@ def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10
                 #     # print(f"Error simplifying path {i}: {e}")
                 #     # Fallback: use original polyline if simplification fails
                 #     colored_polygons.append((polyline, hex_color, path_name))
+        print(f"colored_polygons len:{colored_polygons}")
         return colored_polygons
     except Exception as e:
         print(f"Error processing SVG file: {e}")
@@ -165,6 +233,7 @@ def calculate_epsilon(polyline, target_vertices):
 # Example usage
 if __name__ == "__main__":
     svg_file = "testSVG/jimeng-little-girl.svg"
+    # svg_file = "testSVG/jimeng-little-girl_simplify2.svg"
     # svg_file = "testSVG/test_polygon6.svg"
     # colored_polygons = extract_polygons_with_colors(svg_file, 1)
     # colored_polygons = extract_polygons_with_colors(svg_file, 10)
