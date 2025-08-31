@@ -118,114 +118,11 @@ def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10
                     seen_points.add(point)
             if unique_polyline and len(unique_polyline) > 2 and hex_color:
                 colored_polygons.append((unique_polyline, hex_color, path_name))
-
-            # # print(f"extract_polygons_with_colors polyline:{polyline} path_name:{path_name} hex_color:{hex_color}")
-            # if polyline and len(polyline) > 2:
-            #     colored_polygons.append((polyline, hex_color, path_name))
-            #     print("colored_polygons.append")
-                #简化太严重，不平滑，暂时注释掉
-                # try:
-                #     simplified = simplify_polygon(polyline, max_vertices)
-                #     if len(simplified) >= 3:  # Ensure it's a valid polygon
-                #         colored_polygons.append((simplified, hex_color, path_name))
-                #         print(f"Path {i} {len(polyline)} → {len(simplified)} vertices")
-                # except Exception as e:
-                #     # print(f"Error simplifying path {i}: {e}")
-                #     # Fallback: use original polyline if simplification fails
-                #     colored_polygons.append((polyline, hex_color, path_name))
-        # # # 2. 去重并保持顺序
-        # # seen = set()
-        # # deduplicated_list = []
-        # # for poly_color_path in colored_polygons:
-        # #     # 因为coord是元组，它是可哈希的，可以放入集合中
-        # #     print(f"extract_polygons_with_colors poly_color_path:{poly_color_path[0]}")
-        # #     for coord in poly_color_path[0]:
-        # #         print(f"extract_polygons_with_colors coord:{coord}")
-        # #         if coord not in seen:
-        # #             seen.add(coord)
-        # #         poly.append = []
-        # #         deduplicated_list.append(poly_color_path[0])
-        #
-        # # 3. 将去重后的列表重新嵌套回原来的结构中
-        # colored_polygons = [deduplicated_list]
-
-        print(f"extract_polygons_with_colors colored_polygons:{colored_polygons}")
+        # print(f"extract_polygons_with_colors colored_polygons:{colored_polygons}")
         return colored_polygons
     except Exception as e:
         print(f"Error processing SVG file: {e}")
         return []
-
-
-def extract_polygons_with_colors1(svg_file, max_vertices=500, sampling_density=10):
-    try:
-        paths, attributes = svg2paths(svg_file)
-        color_rules = get_colors_from_css(svg_file)
-
-        colored_polygons = []
-
-        for i, (path, attr) in enumerate(zip(paths, attributes)):
-            path_name = attr.get('id', f'path_{i}')
-            cls = attr.get('class')
-            fill_color = color_rules.get(cls, '#000000')
-            hex_color = parse_svg_color(fill_color)
-            # fill_color = get_path_color(attr, color_rules)
-            # hex_color = parse_svg_color(fill_color)
-
-            polyline = convert_path_to_polyline(
-                path,
-                sampling_density=sampling_density,
-                max_vertices=max_vertices
-            )
-            if not polyline or len(polyline) < 3:
-                print(f"extract_polygons_with_colors1 error path_name:{path_name} polyline:{polyline}")
-                continue
-            # print(f"extract_polygons_with_colors1 path_name:{path_name} fill_color:{fill_color} polyline:{polyline}")
-            colored_polygons.append((polyline, hex_color, path_name))
-        print(f"extract_polygons_with_colors1 colored_polygons:{colored_polygons}")
-        return colored_polygons
-    except Exception as e:
-        print(f"Error processing SVG file: {e}")
-        return []
-
-
-def convert_path_to_polyline(path, sampling_density=10, max_vertices=None):
-    """Convert an SVG path to a polyline by sampling points along its segments.
-
-    Args:
-        path: SVG path object (from svg.path or similar).
-        sampling_density: Controls the number of samples per unit length.
-        max_vertices: Optional limit on the total number of vertices.
-
-    Returns:
-        List of (x, y) tuples representing the polyline vertices.
-    """
-    polyline = []
-    total_samples = 0
-    # print(f"convert_path_to_polyline path:{path}")
-    for segment in path:
-        if segment.length() == 0:
-            continue  # Skip zero-length segments
-
-        # Calculate number of samples for this segment
-        num_samples = max(2, int(segment.length() * sampling_density))
-
-        # Limit samples if max_vertices is set
-        if max_vertices is not None:
-            remaining_vertices = max_vertices - total_samples
-            if remaining_vertices <= 0:
-                break  # Reached vertex limit
-            num_samples = min(num_samples, remaining_vertices)
-        num_samples = 10
-        # Sample points along the segment
-        for t in np.linspace(0, 1, num_samples):
-            point = segment.point(t)
-            x = round(point.real, 1)  # Round to 1 decimal place
-            y = round(point.imag, 1)
-            polyline.append((x, y))
-            print("---- segment.point:", point, " polyline:", polyline)
-            total_samples += 1
-
-    return polyline
 
 def visualize_colored_polygons(colored_polygons, palette=None, title="SVG Polygons"):
     """Visualize polygons with colors"""
@@ -336,7 +233,6 @@ if __name__ == "__main__":
     # colored_polygons = extract_polygons_with_colors(svg_file, 20)
     # colored_polygons = extract_polygons_with_colors(svg_file, 200)
     colored_polygons = extract_polygons_with_colors(svg_file, 20)
-    # colored_polygons = extract_polygons_with_colors1(svg_file, 20)
     print("colored_polygons type:", type(colored_polygons), " len:", len(colored_polygons))#type: <class 'list'>  len: 51
     print("colored_polygons:", colored_polygons[0][0])
     #extract_polygons_with_colors tolerence->len 1->5197,10->515,20->256, 200->28 变形了
