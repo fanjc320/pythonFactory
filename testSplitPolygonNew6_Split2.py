@@ -111,7 +111,8 @@ if __name__ == "__main__":
             continue
         print("visualize_with_similar_colors polygon type:", type(polygon), " len:", len(polygon), type(polygon[0]))
         print("---------------polygon:", polygon)
-        all_decompositions = recursive_split_new1(polygon, 160)
+        threashold_set = 150 / 180.0 * math.pi  # 弧度角
+        all_decompositions = recursive_split_new1(polygon, threashold_set)
         # print("visualize_with_similar_colors all_decompositions:", all_decompositions)
         print("visualize_with_similar_colors len all_decompositions:", len(all_decompositions))
         for j, decomposition in enumerate(all_decompositions):
