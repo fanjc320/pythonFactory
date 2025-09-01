@@ -235,7 +235,6 @@ if __name__ == "__main__":
     colored_polygons = extract_polygons_with_colors(svg_file, 20)
     print("colored_polygons type:", type(colored_polygons), " len:", len(colored_polygons))#type: <class 'list'>  len: 51
     print("colored_polygons:", colored_polygons[0][0])
-    #extract_polygons_with_colors tolerence->len 1->5197,10->515,20->256, 200->28 变形了
     index = 5
     print("colored_polygons  00 len:", len(colored_polygons[index][0]))
     threashold_set = 150 / 180.0 * math.pi  # 弧度角

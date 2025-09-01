@@ -2,10 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 from itertools import combinations
-import math
-from testSVGtoPolygon3 import extract_polygons_with_colors
-from common.Polygon_Simplify1 import rdp_simplify
-from common.typeInfoDetail import recursive_type_compact
 matplotlib.rc("font",family='MicroSoft YaHei',weight="bold")
 matplotlib.use('Qt5Agg')
 def calculate_angle(p0, p1, p2):

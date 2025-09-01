@@ -1,12 +1,14 @@
 #deepseek simplify polygons with less vertices less than 100
 from svgpathtools import svg2paths
 import numpy as np
+import math
 from scipy import signal
 import matplotlib.pyplot as plt
 import matplotlib
 from rdp import rdp
 matplotlib.use('Qt5Agg')
 from testSVGtoPolygon2_2 import extract_polygons_with_colors
+from testSplitPolygonNew6_Split1_test1 import recursive_split
 from testSplitPolygonNew6_Split1 import recursive_split_new,recursive_split_new1, plot_polygon_decomposition
 def simplify_polygon(polygon, max_vertices=100, tolerance=0.1):
     """
@@ -112,7 +114,8 @@ if __name__ == "__main__":
         print("visualize_with_similar_colors polygon type:", type(polygon), " len:", len(polygon), type(polygon[0]))
         print("---------------polygon:", polygon)
         threashold_set = 150 / 180.0 * math.pi  # 弧度角
-        all_decompositions = recursive_split_new1(polygon, threashold_set)
+        # all_decompositions = recursive_split_new1(polygon, threashold_set)
+        all_decompositions = recursive_split(polygon, threashold_set)
         # print("visualize_with_similar_colors all_decompositions:", all_decompositions)
         print("visualize_with_similar_colors len all_decompositions:", len(all_decompositions))
         for j, decomposition in enumerate(all_decompositions):
