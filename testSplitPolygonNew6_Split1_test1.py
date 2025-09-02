@@ -989,6 +989,25 @@ def main_with_split_history():
         # 可视化
         visualize_decomposition_with_history(decomposition, split_history,
                                              title=f"Unique Decomposition {i + 1}")
+
+        score_sort = []
+
+        polygons = [ [global_polygon[i] for i in indices] for indices in decomposition]
+        polygons = [Polygon(poly) for poly in polygons]
+        print(f"main_with_split_history polygons:{polygons} decomp:{decomposition}")
+        #
+        score_overall = get_aggregate_regularity(polygons)
+        print(f"方案 {i + 1}: {len(decomposition)} 个子多边形 综合评分:{score_overall}")
+        score_sort.append({
+            "polygon_index": i,
+            "overall_score": score_overall
+        })
+
+        # 按综合评分排序
+        score_sort.sort(key=lambda x: x["overall_score"], reverse=True)
+        # print(f"score_sort:{score_sort}")
+        for score in score_sort:
+            print(f"score:{score}")
 ##########################################
 
 # 使用示例
@@ -1461,9 +1480,9 @@ def enhanced_evaluate_split_quality(self, split_polygons):
 
 #######################################################################
 # global_polygon0 = [(0, 0), (0.5, 0.5), (1.0, 0),(1.5, 0.5), (2.0, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-global_polygon = [(0, 0), (0.5, 0.5), (1.5, 0), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
+global_polygon2 = [(0, 0), (0.5, 0.5), (1.5, 0), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
 global_polygon1 = [(0, 0), (0.5, 0.2), (1.5, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-global_polygon3 = [(337.7, 585.1), (338.5, 581.7), (339.2, 578.3), (339.8, 574.8), (340.3, 571.3), (340.9, 567.8),
+global_polygon = [(337.7, 585.1), (338.5, 581.7), (339.2, 578.3), (339.8, 574.8), (340.3, 571.3), (340.9, 567.8),
                   (341.4, 564.2), (341.9, 560.7), (342.4, 557.3), (343.0, 553.8), (344.9, 543.2), (346.8, 532.4),
                   (348.9, 521.5), (351.1, 510.7), (353.6, 499.9), (356.4, 489.1), (359.6, 478.6), (363.1, 468.3),
                   (367.1, 458.2), (367.2, 461.9), (367.2, 465.6), (367.1, 469.3), (366.9, 473.0), (366.6, 476.8),
@@ -1639,6 +1658,7 @@ def main():
         for j, poly in enumerate(decomp):
             concave_count = len(find_concave_vertices(poly, threshold=threashold_set))
             print(f"  子多边形 {j + 1}: {len(poly)} 顶点, {concave_count} 凹顶点")
+            print(f"main poly:{poly} decomp:{decomp}")
     # 按综合评分排序
     score_sort.sort(key=lambda x: x["overall_score"], reverse=True)
     # print(f"score_sort:{score_sort}")
@@ -1655,3 +1675,4 @@ def main():
 # 使用示例
 if __name__ == "__main__":
     main_with_split_history()
+    # main()
