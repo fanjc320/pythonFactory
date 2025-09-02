@@ -491,6 +491,271 @@ def recursive_split(part_indices, threshold=2.6, current_decomposition=None, dep
         return [current_decomposition]
 
     return decompositions
+
+
+# 全局变量
+global_polygon = []  # 存储原始多边形的所有顶点
+
+
+def recursive_split_direct_global(part_global_indices, threshold=2.6, current_decomposition=None, depth=0, max_depth=10,
+                                  visited_states=None):
+    """
+    递归拆分多边形，直接使用全局索引
+    """
+    global global_polygon
+
+    if visited_states is None:
+        visited_states = set()
+
+    if current_decomposition is None:
+        current_decomposition = [part_global_indices]
+
+    # 生成当前状态的唯一标识（基于全局索引）
+    state_key = tuple(tuple(sorted(indices)) for indices in current_decomposition)
+    if state_key in visited_states:
+        return [current_decomposition]
+
+    visited_states.add(state_key)
+
+    # 检查终止条件
+    if depth > max_depth:
+        return [current_decomposition]
+
+    # 检查所有子多边形是否满足条件（凹顶点数 <= 1）
+    all_valid = True
+    for global_indices in current_decomposition:
+        poly = [global_polygon[i] for i in global_indices]
+        if len(find_concave_vertices(poly, threshold)) > 1:
+            all_valid = False
+            break
+
+    if all_valid:
+        return [current_decomposition]
+
+    decompositions = []
+
+    # 遍历每个需要拆分的子多边形
+    for idx, global_indices in enumerate(current_decomposition):
+        # 从全局索引获取多边形
+        poly = [global_polygon[i] for i in global_indices]
+
+        # 查找凹顶点（返回局部索引）
+        local_concave_verts = find_concave_vertices(poly, threshold)
+
+        if len(local_concave_verts) <= 1:
+            continue
+
+        print(f"\n深度 {depth}: 处理子多边形")
+        print(f"全局索引: {global_indices}")
+        print(f"凹顶点局部索引: {local_concave_verts}")
+        print(f"凹顶点全局索引: {[global_indices[i] for i in local_concave_verts]}")
+
+        # 生成拆分线（使用局部索引）
+        splits = generate_promising_splits_direct(poly, local_concave_verts, threshold, global_indices)
+
+        if not splits:
+            print("没有生成有效的拆分线")
+            continue
+
+        for local_i, local_j in splits:
+            try:
+                print(
+                    f"尝试拆分: 局部索引({local_i}, {local_j}) -> 全局索引({global_indices[local_i]}, {global_indices[local_j]})")
+
+                # 拆分多边形（使用局部索引）
+                new_poly1, new_poly2 = split_polygon(poly, local_i, local_j)
+
+                if len(new_poly1) < 3 or len(new_poly2) < 3:
+                    continue
+
+                # 直接将局部索引映射回全局索引
+                global_i, global_j = global_indices[local_i], global_indices[local_j]
+
+                # 确定拆分路径（使用全局索引）
+                if local_i < local_j:
+                    # 路径1: i -> j
+                    new_global_indices1 = global_indices[local_i:local_j + 1]
+                    # 路径2: j -> end + start -> i
+                    new_global_indices2 = global_indices[local_j:] + global_indices[:local_i + 1]
+                else:
+                    # 路径1: i -> end + start -> j
+                    new_global_indices1 = global_indices[local_i:] + global_indices[:local_j + 1]
+                    # 路径2: j -> i
+                    new_global_indices2 = global_indices[local_j:local_i + 1]
+
+                # 验证拆分结果
+                if not validate_global_split(global_indices, new_global_indices1, new_global_indices2):
+                    print("拆分验证失败")
+                    continue
+
+                print(f"拆分成功:")
+                print(f"  子多边形1全局索引: {new_global_indices1}")
+                print(f"  子多边形2全局索引: {new_global_indices2}")
+
+                # 创建新的分解（直接使用全局索引）
+                new_decomposition = (
+                        current_decomposition[:idx] +
+                        [new_global_indices1, new_global_indices2] +
+                        current_decomposition[idx + 1:]
+                )
+
+                # 递归处理
+                new_decomps = recursive_split_direct_global(
+                    part_global_indices, threshold, new_decomposition,
+                    depth + 1, max_depth, visited_states
+                )
+
+                decompositions.extend(new_decomps)
+
+            except Exception as e:
+                print(f"拆分过程中出错: {e}")
+                continue
+
+        if decompositions:
+            break
+
+    return decompositions if decompositions else [current_decomposition]
+
+
+def generate_promising_splits_direct(poly, local_concave_verts, threshold, global_indices):
+    """生成拆分线，直接使用全局索引信息"""
+    splits = []
+    n = len(poly)
+
+    print(f"\n生成拆分线:")
+    print(f"多边形顶点数: {n}")
+    print(f"凹顶点局部索引: {local_concave_verts}")
+    print(f"凹顶点全局索引: {[global_indices[i] for i in local_concave_verts]}")
+    print(f"所有顶点全局索引: {global_indices}")
+
+    for i in range(len(local_concave_verts)):
+        for j in range(i + 1, len(local_concave_verts)):
+            local_i = local_concave_verts[i]
+            local_j = local_concave_verts[j]
+
+            if not is_valid_split(poly, local_i, local_j):
+                continue
+
+            splits.append((local_i, local_j))
+            print(
+                f"有效拆分线: 局部({local_i}, {local_j}) -> 全局({global_indices[local_i]}, {global_indices[local_j]})")
+
+    print(f"总共生成 {len(splits)} 条有效拆分线")
+    return splits
+
+
+def validate_global_split(original_global_indices, new_global_indices1, new_global_indices2):
+    """验证全局索引拆分是否正确"""
+    # 检查顶点数
+    if len(new_global_indices1) < 3 or len(new_global_indices2) < 3:
+        return False
+
+    # 检查所有原始顶点都被包含
+    original_set = set(original_global_indices)
+    new_set = set(new_global_indices1 + new_global_indices2)
+
+    if original_set != new_set:
+        print(f"顶点不匹配: 原始{original_set} vs 拆分后{new_set}")
+        return False
+
+    # 检查没有重复顶点
+    if len(new_global_indices1) != len(set(new_global_indices1)) or \
+            len(new_global_indices2) != len(set(new_global_indices2)):
+        print("有重复顶点")
+        return False
+
+    return True
+
+
+def find_concave_vertices_with_global_indices(global_indices, threshold=2.6):
+    """查找凹顶点，返回全局索引"""
+    global global_polygon
+    poly = [global_polygon[i] for i in global_indices]
+    local_concave = find_concave_vertices(poly, threshold)
+    return [global_indices[i] for i in local_concave]
+
+
+# 辅助函数
+def get_polygon_from_global_indices(global_indices):
+    """从全局索引获取多边形"""
+    global global_polygon
+    return [global_polygon[i] for i in global_indices]
+
+
+def visualize_global_decomposition(decomposition, title="Polygon Decomposition"):
+    """可视化基于全局索引的分解"""
+    global global_polygon
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    # 绘制原始多边形
+    original_poly = np.array(global_polygon)
+    original_patch = patches.Polygon(original_poly, alpha=0.2, edgecolor='black',
+                                     facecolor='lightgray', linestyle='--', label='Original')
+    ax.add_patch(original_patch)
+
+    # 绘制每个子多边形
+    colors = []
+    patches_list = []
+
+    for i, global_indices in enumerate(decomposition):
+        poly_vertices = [global_polygon[idx] for idx in global_indices]
+        color = (random.random() * 0.7 + 0.3, random.random() * 0.7 + 0.3, random.random() * 0.7 + 0.3)
+
+        patch = patches.Polygon(poly_vertices, alpha=0.6, edgecolor='black',
+                                facecolor=color, linewidth=2)
+        patches_list.append(patch)
+
+        # 标记顶点编号（全局索引）
+        for idx in global_indices:
+            x, y = global_polygon[idx]
+            ax.text(x, y, f'{idx}', fontsize=8, ha='center', va='center',
+                    bbox=dict(boxstyle="circle,pad=0.2", facecolor='white', alpha=0.8))
+
+    collection = PatchCollection(patches_list, match_original=True)
+    ax.add_collection(collection)
+
+    # 设置图形
+    all_points = np.array(global_polygon)
+    x_min, y_min = all_points.min(axis=0) - 1
+    x_max, y_max = all_points.max(axis=0) + 1
+
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+    ax.set_aspect('equal')
+    ax.grid(True, alpha=0.3)
+    ax.set_title(title, fontsize=14, fontweight='bold')
+
+    plt.tight_layout()
+    plt.show()
+
+
+# 使用示例
+def main_direct_global():
+    global global_polygon
+
+    # 设置全局多边形
+    global_polygon = [(0, 0), (10, 0), (10, 5), (8, 8), (5, 10), (0, 10)]
+
+    # 初始全局索引（所有顶点）
+    initial_global_indices = list(range(len(global_polygon)))
+
+    print("开始递归拆分...")
+    decompositions = recursive_split_direct_global(initial_global_indices, threshold=2.6)
+
+    print(f"\n找到 {len(decompositions)} 种分解方案")
+
+    for i, decomp in enumerate(decompositions):
+        print(f"\n方案 {i + 1}:")
+        for j, global_indices in enumerate(decomp):
+            poly = get_polygon_from_global_indices(global_indices)
+            # area = polygon_area(poly)
+            concave_count = len(find_concave_vertices(poly, 2.6))
+            # print(f"  子多边形{j + 1}: {len(global_indices)}顶点, {concave_count}凹点, 面积{area:.2f}")
+            print(f"  子多边形{j + 1}: {len(global_indices)}顶点, {concave_count}凹点")
+
+        # 可视化
+        visualize_global_decomposition(decomp, title=f"Decomposition {i + 1}")
 def is_valid_split_line(polygon, i, j, threshold=160):
     """完整检查拆分线是否有效"""
     n = len(polygon)
@@ -943,9 +1208,9 @@ def enhanced_evaluate_split_quality(self, split_polygons):
 
 #######################################################################
 # global_polygon0 = [(0, 0), (0.5, 0.5), (1.0, 0),(1.5, 0.5), (2.0, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-global_polygon = [(0, 0), (0.5, 0.5), (1.5, 0), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
+global_polygon2 = [(0, 0), (0.5, 0.5), (1.5, 0), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
 global_polygon1 = [(0, 0), (0.5, 0.2), (1.5, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-global_polygon2 = [(337.7, 585.1), (338.5, 581.7), (339.2, 578.3), (339.8, 574.8), (340.3, 571.3), (340.9, 567.8),
+global_polygon = [(337.7, 585.1), (338.5, 581.7), (339.2, 578.3), (339.8, 574.8), (340.3, 571.3), (340.9, 567.8),
                   (341.4, 564.2), (341.9, 560.7), (342.4, 557.3), (343.0, 553.8), (344.9, 543.2), (346.8, 532.4),
                   (348.9, 521.5), (351.1, 510.7), (353.6, 499.9), (356.4, 489.1), (359.6, 478.6), (363.1, 468.3),
                   (367.1, 458.2), (367.2, 461.9), (367.2, 465.6), (367.1, 469.3), (366.9, 473.0), (366.6, 476.8),

@@ -216,7 +216,8 @@ def main_with_visualization():
 
     # 执行递归拆分
     print("\n开始递归拆分...")
-    decompositions = recursive_split(initial_indices, threshold=2.6)
+    # decompositions = recursive_split(initial_indices, threshold=2.6)
+    decompositions = recursive_split_direct_global(initial_indices, threshold=2.6)
 
     # 输出结果并可视化
     print(f"\n找到 {len(decompositions)} 种分解方案")
