@@ -856,6 +856,22 @@ def recursive_split_direct_global(part_global_indices, threshold=2.6, current_de
     return results
 
 
+# 添加去重函数
+def remove_duplicate_decompositions(results):
+    """移除重复的分解结果"""
+    unique_results = []
+    seen = set()
+
+    for decomposition, split_history in results:
+        # 生成唯一标识：对每个子多边形的索引进行排序，然后对整个分解进行排序
+        decomposition_key = tuple(sorted(tuple(sorted(indices)) for indices in decomposition))
+
+        if decomposition_key not in seen:
+            seen.add(decomposition_key)
+            unique_results.append((decomposition, split_history))
+
+    return unique_results
+
 # 辅助函数：打印拆分历史
 def print_split_history(split_history):
     """打印拆分历史信息"""
@@ -946,10 +962,13 @@ def main_with_split_history():
     print("开始递归拆分...")
     results = recursive_split_direct_global(initial_global_indices, threshold=2.6)
 
-    print(f"\n找到 {len(results)} 种分解方案")
+    # 移除重复的分解结果
+    unique_results = remove_duplicate_decompositions(results)
 
-    for i, (decomposition, split_history) in enumerate(results):
-        print(f"\n=== 方案 {i + 1} ===")
+    print(f"\n找到 {len(results)} 种分解方案，其中 {len(unique_results)} 种唯一方案")
+
+    for i, (decomposition, split_history) in enumerate(unique_results):
+        print(f"\n=== 唯一方案 {i + 1} ===")
         print(f"拆分步骤数: {len(split_history)}")
         print(f"子多边形数量: {len(decomposition)}")
 
@@ -969,9 +988,7 @@ def main_with_split_history():
 
         # 可视化
         visualize_decomposition_with_history(decomposition, split_history,
-                                             title=f"Decomposition Solution {i + 1}")
-
-
+                                             title=f"Unique Decomposition {i + 1}")
 ##########################################
 
 # 使用示例
@@ -1444,9 +1461,9 @@ def enhanced_evaluate_split_quality(self, split_polygons):
 
 #######################################################################
 # global_polygon0 = [(0, 0), (0.5, 0.5), (1.0, 0),(1.5, 0.5), (2.0, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-global_polygon2 = [(0, 0), (0.5, 0.5), (1.5, 0), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
+global_polygon = [(0, 0), (0.5, 0.5), (1.5, 0), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
 global_polygon1 = [(0, 0), (0.5, 0.2), (1.5, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-global_polygon = [(337.7, 585.1), (338.5, 581.7), (339.2, 578.3), (339.8, 574.8), (340.3, 571.3), (340.9, 567.8),
+global_polygon3 = [(337.7, 585.1), (338.5, 581.7), (339.2, 578.3), (339.8, 574.8), (340.3, 571.3), (340.9, 567.8),
                   (341.4, 564.2), (341.9, 560.7), (342.4, 557.3), (343.0, 553.8), (344.9, 543.2), (346.8, 532.4),
                   (348.9, 521.5), (351.1, 510.7), (353.6, 499.9), (356.4, 489.1), (359.6, 478.6), (363.1, 468.3),
                   (367.1, 458.2), (367.2, 461.9), (367.2, 465.6), (367.1, 469.3), (366.9, 473.0), (366.6, 476.8),
