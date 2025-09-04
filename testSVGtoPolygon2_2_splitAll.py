@@ -54,7 +54,7 @@ def get_path_classes(svg_file):
 
     return path_classes
 
-def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10):
+def extract_polygons_with_colors_old(svg_file, max_vertices=500, sampling_density=10):
     """
     Extract polygons with their colors from SVG
     """
@@ -96,7 +96,8 @@ def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10
                     x = round(point.real, 1)
                     y = round(point.imag, 1)
                     polyline.append((x, y))
-                    # print("---- segment.point:", point, " polyline:", polyline)
+                    print(f"segment.point xy:{x, y}")
+            print("---- segment.point:", point, " polyline:", polyline)
             unique_polyline = []
             seen_points = set()
             for point in polyline:
@@ -110,6 +111,96 @@ def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10
     except Exception as e:
         print(f"Error processing SVG file: {e}")
         return []
+
+
+def extract_polygons_with_colors(svg_file, max_vertices=200, sampling_density=0.1):
+    """
+    Extract polygons with their colors from SVG
+    """
+    try:
+        paths, attributes = svg2paths(svg_file)
+        color_rules = get_colors_from_css(svg_file)
+        path_classes = get_path_classes(svg_file)
+
+        colored_polygons = []
+
+        for i, (path, attr) in enumerate(zip(paths, attributes)):
+            # Get fill color
+            path_name = attr.get('id', f'path_{i}')
+            if 'id' not in attr:
+                print(f"Path {i} has no ID, using generated name: {path_name}")
+
+            cls = attr.get('class')
+            fill_color = color_rules.get(cls, '#000000')
+            hex_color = parse_svg_color(fill_color)
+
+            # Convert path to polygon with better sampling
+            polyline = []
+
+            # 计算整个路径的总长度
+            total_length = path.length()
+
+            # 根据总长度决定采样点数量
+            num_samples = min(max_vertices, max(20, int(total_length * sampling_density)))#最小不能少于20
+            # num_samples = min(max_vertices, int(total_length * sampling_density))#会丢掉很小的区域
+            print(f"extract_polygons_with_colors, calculateed num_samples: {num_samples} total_length:{total_length} ")
+            # num_samples = 200
+            # 在整个路径上均匀采样
+            for t in np.linspace(0, 1, num_samples):
+                try:
+                    point = path.point(t)
+                    x = round(point.real, 1)
+                    y = round(point.imag, 1)
+                    polyline.append((x, y))
+                except:
+                    # 如果路径点计算失败，跳过
+                    continue
+
+            # 如果上面的方法失败，回退到逐segment采样
+            if not polyline:
+                for segment in path:
+                    if segment.length() == 0:
+                        continue
+                    # 根据segment长度动态调整采样点
+                    seg_samples = max(2, min(int(segment.length() * sampling_density), 50))
+                    print(f"num_samples fail, use seg_samples:{seg_samples}")
+                    for t in np.linspace(0, 1, seg_samples):
+                        point = segment.point(t)
+                        x = round(point.real, 1)
+                        y = round(point.imag, 1)
+                        polyline.append((x, y))
+
+            # 智能去重 - 只删除非常接近的点
+            cleaned_polyline = []
+            prev_point = None
+            for point in polyline:
+                if prev_point is None or not is_too_close(prev_point, point, threshold=0.1):
+                    cleaned_polyline.append(point)
+                    prev_point = point
+
+            # 确保多边形闭合（如果路径是闭合的）
+            if len(cleaned_polyline) > 2:
+                # 检查首尾点是否接近，如果不接近则添加闭合点
+                first_point = cleaned_polyline[0]
+                last_point = cleaned_polyline[-1]
+                if not is_too_close(first_point, last_point, threshold=1.0):
+                    cleaned_polyline.append(first_point)
+
+            if len(cleaned_polyline) > 2 and hex_color:
+                colored_polygons.append((cleaned_polyline, hex_color, path_name))
+
+        return colored_polygons
+
+    except Exception as e:
+        print(f"Error processing SVG file: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
+
+
+def is_too_close(p1, p2, threshold=0.1):
+    """检查两点是否过于接近"""
+    return ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** 0.5 < threshold
 
 def visualize_colored_polygons(colored_polygons, palette=None, title="SVG Polygons", showName = False, highlight_index = None):
     """Visualize polygons with colors"""
@@ -135,8 +226,8 @@ def visualize_colored_polygons(colored_polygons, palette=None, title="SVG Polygo
         if highlight_index is not None and i == highlight_index:
             print(f"visualize_colored_polygons highlight_index:{highlight_index} polygon:{polygon}")
             # 突出显示的多边形
-            edgecolor = 'red'
-            linewidth = 3
+            edgecolor = 'black'
+            linewidth = 5
             alpha = 1.0
             # fill_color = '#FFFF00'  # 黄色突出显示
             fill_color = '#00FFFF'  # cyan突出显示
@@ -241,25 +332,25 @@ def show_extract_svg():
     svg_file = "testSVG/jimeng-little-girl.svg"
     # svg_file = "testSVG/jimeng-little-girl_simplify2.svg"
     # svg_file = "testSVG/test_polygon6.svg"
-    # colored_polygons = extract_polygons_with_colors(svg_file, 1)
     # colored_polygons = extract_polygons_with_colors(svg_file, 10)
     # colored_polygons = extract_polygons_with_colors(svg_file, 20)
     # colored_polygons = extract_polygons_with_colors(svg_file, 200)
-    colored_polygons = extract_polygons_with_colors(svg_file, 20)
-    print("colored_polygons type:", type(colored_polygons), " len:", len(colored_polygons))#type: <class 'list'>  len: 51
-    print("colored_polygons:", colored_polygons[0][0])
-    index = 5
-    print("colored_polygons  00 len:", len(colored_polygons[index][0]))
+    colored_polygons = extract_polygons_with_colors(svg_file, 200)
+    # print("colored_polygons type:", type(colored_polygons), " len:", len(colored_polygons))#type: <class 'list'>  len: 51
+    # print("colored_polygons:", colored_polygons[0][0])
+    specific_index = 23
+    print("colored_polygons  00 len:", len(colored_polygons[specific_index][0]))
     threashold_set = 150 / 180.0 * math.pi  # 弧度角
-    concave_verts = find_concave_vertices(colored_polygons[index][0], threshold=threashold_set)  # 外∠更凹，外∠越小，越凹，angle就越小
+    concave_verts = find_concave_vertices(colored_polygons[specific_index][0], threshold=threashold_set)  # 外∠更凹，外∠越小，越凹，angle就越小
     print("凹顶点索引:", concave_verts)
-    print("凹顶点坐标:", [colored_polygons[index][0][i] for i in concave_verts])
-    draw_polygon_with_concave(colored_polygons[index][0], concave_verts, color='skyblue', alpha=0.7)
+    print("凹顶点坐标:", [colored_polygons[specific_index][0][i] for i in concave_verts])
+    draw_polygon_with_concave(colored_polygons[specific_index][0], concave_verts, color='skyblue', alpha=0.7)
 
     visualize_colored_polygons(colored_polygons, palette=[
         '#FF0000', '#FF7F00', '#FFFF00', '#7FFF00', '#00FF00',
         '#00FF7F', '#00FFFF', '#007FFF', '#0000FF', '#7F00FF'
-    ], showName=True, highlight_index=4)  # Custom palette
+    # ], showName=True, highlight_index=specific_index)  # showName 在图片区域显示pathName, highlight_index高亮某个区域
+    ], showName=False)  # showName 在图片区域显示pathName, highlight_index高亮某个区域
 
 
 
@@ -274,8 +365,8 @@ def split_svg_all_polygons():
         print(f"Polygon {i + 1}: {len(poly)} vertices")
 
     for i, (polygon, color, path_name) in enumerate(simplified_polygons):
-        if i != 5: # 0-3是大块 4是一条直线 5有小的凹点，需要处理
-            continue
+        # if i != 23: # 0-3是大块 4是一条直线 23有小凹点
+        #     continue
         # print("visualize_with_similar_colors polygon type:", type(polygon), " len:", len(polygon), type(polygon[0]))
 
         concave_verts = find_concave_vertices(polygon, threshold=threashold_set)  # 外∠更凹，外∠越小，越凹，angle就越小

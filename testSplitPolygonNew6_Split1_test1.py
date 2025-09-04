@@ -799,6 +799,7 @@ def draw_polygon_with_concave(vertices, concave_verts, color='blue', alpha=0.5, 
     # 显示图形
     plt.grid(True)
     plt.axis('equal')  # 保持纵横比一致
+    plt.gca().invert_yaxis()
     plt.show()
 
 #######################################################################
