@@ -802,6 +802,7 @@ def draw_polygon_with_concave(vertices, concave_verts, color='blue', alpha=0.5, 
     plt.show()
 
 #######################################################################
+threashold_set = 150 / 180.0 * math.pi  # 弧度角
 # global_polygon0 = [(0, 0), (0.5, 0.5), (1.0, 0),(1.5, 0.5), (2.0, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
 global_polygon2 = [(0, 0), (0.5, 0.5), (1.5, 0), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
 global_polygon1 = [(0, 0), (0.5, 0.2), (1.5, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
@@ -827,9 +828,11 @@ global_polygon = [(337.7, 585.1), (338.5, 581.7), (339.2, 578.3), (339.8, 574.8)
                   (327.9, 586.1)]
 
 
-def main_with_split_history():
-    global global_polygon
+def main_with_split_history(polygon):
     # 初始全局索引
+    global threashold_set
+    global global_polygon
+    global_polygon = polygon
     initial_global_indices = list(range(len(global_polygon)))
 
     print("开始递归拆分...")
@@ -854,7 +857,7 @@ def main_with_split_history():
         for j, global_indices in enumerate(decomposition):
             poly = get_polygon_from_global_indices(global_indices)
             # area = polygon_area(poly)
-            concave_count = len(find_concave_vertices(poly, 2.6))
+            concave_count = len(find_concave_vertices(poly, threashold_set))
             convex_status = "凸" if concave_count == 0 else "凹"
             # print(f"  子多边形{j + 1}: {convex_status}, {len(global_indices)}顶点, {concave_count}凹点, 面积{area:.2f}")
             print(f"  子多边形{j + 1}: {convex_status}, {len(global_indices)}顶点, {concave_count}凹点")
@@ -882,10 +885,12 @@ def main_with_split_history():
     for score in score_sort:
         print(f"score:{score}")
     index_best = score_sort[0]['polygon_index']
-    decomp, history = unique_results[7]
+    decomp, history = unique_results[index_best]
     print("index_best:", index_best)
     visualize_decomposition_with_history(decomp, history)
 
+
 # 使用示例
 if __name__ == "__main__":
-    main_with_split_history()
+    # global global_polygon
+    main_with_split_history(global_polygon)

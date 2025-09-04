@@ -13,7 +13,7 @@ from collections import defaultdict
 from svgpathtools import svg2paths
 import re
 import math
-from testSplitPolygonNew6_Split1_test1 import find_concave_vertices,draw_polygon_with_concave
+from testSplitPolygonNew6_Split1_test1 import find_concave_vertices,draw_polygon_with_concave,main_with_split_history,threashold_set
 
 
 def get_colors_from_css(svg_file):
@@ -53,19 +53,6 @@ def get_path_classes(svg_file):
         path_classes[path_id or f"path_{len(path_classes)}"] = classes
 
     return path_classes
-
-
-# # 使用示例
-# svg_file = 'testSVG/jimeng-little-girl.svg'
-# color_rules = get_colors_from_css(svg_file)
-# path_classes = get_path_classes(svg_file)
-#
-# # 关联路径和颜色
-# for path_id, classes in path_classes.items():
-#     for cls in classes:
-#         if cls in color_rules:
-#             print(f"路径 {path_id} class:{cls} 颜色: {color_rules[cls]}")
-#             break
 
 def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10):
     """
@@ -109,7 +96,7 @@ def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10
                     x = round(point.real, 1)
                     y = round(point.imag, 1)
                     polyline.append((x, y))
-                    print("---- segment.point:", point, " polyline:", polyline)
+                    # print("---- segment.point:", point, " polyline:", polyline)
             unique_polyline = []
             seen_points = set()
             for point in polyline:
@@ -224,7 +211,7 @@ def calculate_epsilon(polyline, target_vertices):
     return max(bbox_width, bbox_height) * 0.01
 
 # Example usage
-if __name__ == "__main__":
+def show_extract_svg():
     svg_file = "testSVG/jimeng-little-girl.svg"
     # svg_file = "testSVG/jimeng-little-girl_simplify2.svg"
     # svg_file = "testSVG/test_polygon6.svg"
@@ -247,3 +234,29 @@ if __name__ == "__main__":
         '#FF0000', '#FF7F00', '#FFFF00', '#7FFF00', '#00FF00',
         '#00FF7F', '#00FFFF', '#007FFF', '#0000FF', '#7F00FF'
     ])  # Custom palette
+
+def split_svg_all_polygons():
+    global threashold_set
+    svg_file = "testSVG/jimeng-little-girl.svg"
+    # svg_file = "testSVG/test_polygon6.svg"
+    # simplified_polygons = process_svg(svg_file, max_vertices=100)
+    simplified_polygons = extract_polygons_with_colors(svg_file, max_vertices=1000)
+    print(f"Reduced to {len(simplified_polygons)} polygons  type:{type(simplified_polygons)}")
+    for i, poly in enumerate(simplified_polygons):
+        print(f"Polygon {i + 1}: {len(poly)} vertices")
+
+    for i, (polygon, color, path_name) in enumerate(simplified_polygons):
+        if i != 5: # 0-3是大块 4是一条直线 5有小的凹点，需要处理
+            continue
+        # print("visualize_with_similar_colors polygon type:", type(polygon), " len:", len(polygon), type(polygon[0]))
+
+        concave_verts = find_concave_vertices(polygon, threshold=threashold_set)  # 外∠更凹，外∠越小，越凹，angle就越小
+        print(">>>>>>凹顶点索引:", concave_verts)
+        print(">>>>>>凹顶点坐标:", [polygon[i] for i in concave_verts])
+        draw_polygon_with_concave(polygon, concave_verts, color='skyblue', alpha=0.7)
+
+        # main_with_split_history(polygon)
+
+if __name__ == "__main__":
+    # show_extract_svg()
+    split_svg_all_polygons()

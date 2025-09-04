@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
 from matplotlib.colors import hex2color
-from testSVGtoPolygon2_2 import extract_polygons_with_colors
+from testSVGtoPolygon2_2_splitAll import extract_polygons_with_colors
 import matplotlib.pyplot as plt
 def find_closest_color(target_hex, palette_hex):
     """
