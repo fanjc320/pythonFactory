@@ -261,41 +261,41 @@ def parse_svg_color(color_str):
     }
     return named_colors.get(color_str.lower(), '#000000')
 
-def testCurvature:# 根据曲率大小增加采样点
-    # 创建一个测试SVG文件（包含高曲率路径）
-    test_svg_content = '''<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
-           <path d="M10,10 C50,100 150,100 190,10" stroke="black" fill="none"/>
-           <path d="M10,50 L190,50" stroke="blue" fill="none"/>
-           <path d="M10,100 Q100,150 190,100" stroke="red" fill="none"/>
-       </svg>'''
-
-    with open('test_curvature.svg', 'w') as f:
-        f.write(test_svg_content)
-
-    # 转换SVG为多边形
-    polygons = svg_to_polygons('test_curvature.svg', n_segments_base=10, curvature_threshold=0.05)
-
-    # 可视化结果
-    plt.figure(figsize=(12, 8))
-    colors = ['red', 'blue', 'green', 'orange', 'purple']
-
-    for i, polygon in enumerate(polygons):
-        if len(polygon) > 0:
-            color = colors[i % len(colors)]
-            plt.plot(polygon[:, 0], polygon[:, 1], '-o', color=color, markersize=3,
-                     label=f'Path {i + 1} ({len(polygon)} points)')
-            plt.scatter(polygon[0, 0], polygon[0, 1], color=color, s=50, zorder=5)
-            plt.scatter(polygon[-1, 0], polygon[-1, 1], color=color, s=50, zorder=5)
-
-    plt.axis('equal')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.title('SVG Paths with Adaptive Sampling (High Curvature = More Points)')
-    plt.show()
-
-    # 显示每个路径的点数统计
-    for i, polygon in enumerate(polygons):
-        print(f"Path {i + 1}: {len(polygon)} points")
+# def testCurvature():# 根据曲率大小增加采样点
+#     # 创建一个测试SVG文件（包含高曲率路径）
+#     test_svg_content = '''<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+#            <path d="M10,10 C50,100 150,100 190,10" stroke="black" fill="none"/>
+#            <path d="M10,50 L190,50" stroke="blue" fill="none"/>
+#            <path d="M10,100 Q100,150 190,100" stroke="red" fill="none"/>
+#        </svg>'''
+#
+#     with open('test_curvature.svg', 'w') as f:
+#         f.write(test_svg_content)
+#
+#     # 转换SVG为多边形
+#     polygons = svg_to_polygons('test_curvature.svg', n_segments_base=10, curvature_threshold=0.05)
+#
+#     # 可视化结果
+#     plt.figure(figsize=(12, 8))
+#     colors = ['red', 'blue', 'green', 'orange', 'purple']
+#
+#     for i, polygon in enumerate(polygons):
+#         if len(polygon) > 0:
+#             color = colors[i % len(colors)]
+#             plt.plot(polygon[:, 0], polygon[:, 1], '-o', color=color, markersize=3,
+#                      label=f'Path {i + 1} ({len(polygon)} points)')
+#             plt.scatter(polygon[0, 0], polygon[0, 1], color=color, s=50, zorder=5)
+#             plt.scatter(polygon[-1, 0], polygon[-1, 1], color=color, s=50, zorder=5)
+#
+#     plt.axis('equal')
+#     plt.legend()
+#     plt.grid(True, alpha=0.3)
+#     plt.title('SVG Paths with Adaptive Sampling (High Curvature = More Points)')
+#     plt.show()
+#
+#     # 显示每个路径的点数统计
+#     for i, polygon in enumerate(polygons):
+#         print(f"Path {i + 1}: {len(polygon)} points")
 # 使用示例
 if __name__ == "__main__":
     svg_file = "testSVG/jimeng-little-girl.svg"

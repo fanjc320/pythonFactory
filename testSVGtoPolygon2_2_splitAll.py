@@ -111,7 +111,7 @@ def extract_polygons_with_colors(svg_file, max_vertices=500, sampling_density=10
         print(f"Error processing SVG file: {e}")
         return []
 
-def visualize_colored_polygons(colored_polygons, palette=None, title="SVG Polygons"):
+def visualize_colored_polygons(colored_polygons, palette=None, title="SVG Polygons", showName = False, highlight_index = None):
     """Visualize polygons with colors"""
     plt.figure(figsize=(10, 10))
     plt.title(title)
@@ -131,12 +131,38 @@ def visualize_colored_polygons(colored_polygons, palette=None, title="SVG Polygo
         color_usage[fill_color] += 1
         label = f"Polygon {i + 1} ({fill_color})"
 
+        # 设置多边形样式
+        if highlight_index is not None and i == highlight_index:
+            print(f"visualize_colored_polygons highlight_index:{highlight_index} polygon:{polygon}")
+            # 突出显示的多边形
+            edgecolor = 'red'
+            linewidth = 3
+            alpha = 1.0
+            # fill_color = '#FFFF00'  # 黄色突出显示
+            fill_color = '#00FFFF'  # cyan突出显示
+            label = f"★ HIGHLIGHT: {path_name} ({fill_color})"
+        else:
+            # 普通多边形
+            edgecolor = 'black'
+            linewidth = 0.5
+            alpha = 0.7
+            label = f"Polygon {i} ({fill_color})"
+
         x, y = zip(*polygon)
         plt.fill(x + (x[0],), y + (y[0],),
                  fill_color,
-                 edgecolor='black',
-                 linewidth=0.5,
+                 edgecolor=edgecolor,
+                 linewidth=linewidth,
+                 alpha=alpha,
                  label=label)
+
+        if showName:
+            # 在多边形中心位置显示 path_name
+            center_x = sum(x) / len(x)
+            center_y = sum(y) / len(y)
+            plt.text(center_x, center_y, path_name,
+                     fontsize=8, ha='center', va='center',
+                     bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.7))
 
     plt.axis('equal')
     if len(color_usage) <= 20:
@@ -233,14 +259,16 @@ def show_extract_svg():
     visualize_colored_polygons(colored_polygons, palette=[
         '#FF0000', '#FF7F00', '#FFFF00', '#7FFF00', '#00FF00',
         '#00FF7F', '#00FFFF', '#007FFF', '#0000FF', '#7F00FF'
-    ])  # Custom palette
+    ], showName=True, highlight_index=4)  # Custom palette
+
+
 
 def split_svg_all_polygons():
     global threashold_set
     svg_file = "testSVG/jimeng-little-girl.svg"
     # svg_file = "testSVG/test_polygon6.svg"
     # simplified_polygons = process_svg(svg_file, max_vertices=100)
-    simplified_polygons = extract_polygons_with_colors(svg_file, max_vertices=1000)
+    simplified_polygons = extract_polygons_with_colors(svg_file, max_vertices=20)
     print(f"Reduced to {len(simplified_polygons)} polygons  type:{type(simplified_polygons)}")
     for i, poly in enumerate(simplified_polygons):
         print(f"Polygon {i + 1}: {len(poly)} vertices")
@@ -258,5 +286,5 @@ def split_svg_all_polygons():
         # main_with_split_history(polygon)
 
 if __name__ == "__main__":
-    # show_extract_svg()
-    split_svg_all_polygons()
+    show_extract_svg()
+    # split_svg_all_polygons()
