@@ -255,29 +255,6 @@ def do_lines_intersect(line1, line2):
     # 如果两条线段相交，那么跨立实验的结果应该异号
     return (cross1 * cross2 <= 0) and (cross3 * cross4 <= 0)
 
-
-# 简化版本（如果上面的实现太复杂，可以使用这个简化版本）
-def is_valid_split_simple(polygon, i, j):
-    """
-    简化版本的拆分线有效性检查
-    """
-    n = len(polygon)
-
-    # 1. 不能是相邻顶点
-    if abs(i - j) == 1 or abs(i - j) == n - 1:
-        return False
-
-    # 2. 检查拆分线是否完全在多边形内部（简化检查）
-    # 这里可以使用更简单的方法，比如检查中点是否在多边形内部
-    mid_point = ((polygon[i][0] + polygon[j][0]) / 2,
-                 (polygon[i][1] + polygon[j][1]) / 2)
-
-    if not is_point_in_polygon(mid_point, polygon):
-        return False
-
-    return True
-
-
 def is_point_in_polygon(point, polygon):
     """
     判断点是否在多边形内部（射线法）
@@ -356,151 +333,6 @@ def generate_promising_splits(poly, concave_verts, threshold=2.6):
     print("==================\n")
 
     return splits
-
-
-# 修改 recursive_split 函数中的调用部分
-def recursive_split(part_indices, threshold=2.6, current_decomposition=None, depth=0, max_depth=10,
-                    visited_states=None):
-    """递归拆分多边形（使用索引表示部分），添加状态跟踪防止死循环"""
-    global global_polygon
-
-    if visited_states is None:
-        visited_states = set()
-
-    if current_decomposition is None:
-        current_decomposition = [part_indices]
-
-    # 生成当前状态的唯一标识
-    state_key = tuple(
-        tuple(indices) for indices in sorted(current_decomposition, key=lambda x: (len(x), x[0] if x else 0)))
-    if state_key in visited_states:
-        return [current_decomposition]
-
-    visited_states.add(state_key)
-
-    # 检查终止条件
-    if depth > max_depth:
-        return [current_decomposition]
-
-    # 检查所有子多边形是否满足条件
-    all_valid = True
-    for indices in current_decomposition:
-        if len(find_concave_vertices_with_indices(indices, threshold)) > 1:
-            all_valid = False
-            break
-
-    if all_valid:
-        return [current_decomposition]
-
-    decompositions = []
-
-    # 遍历每个需要拆分的子多边形
-    for idx, indices in enumerate(current_decomposition):
-        # 获取凹顶点（全局索引）
-        global_concave_verts = find_concave_vertices_with_indices(indices, threshold)
-
-        if len(global_concave_verts) <= 1:
-            continue
-
-        # 从全局多边形中提取当前部分的多边形
-        poly = [global_polygon[i] for i in indices]
-
-        # 将全局凹顶点索引转换为局部索引
-        local_concave_verts = []
-        for global_idx in global_concave_verts:
-            if global_idx in indices:
-                local_concave_verts.append(indices.index(global_idx))
-
-        print(f"\n深度 {depth}: 处理子多边形 {idx}")
-        print(f"全局索引: {indices}")
-        print(f"凹顶点全局索引: {global_concave_verts}")
-        print(f"凹顶点局部索引: {local_concave_verts}")
-
-        # 生成拆分线（使用局部索引）
-        splits = generate_promising_splits(poly, local_concave_verts, threshold)
-        print(f"所有拆分对 splits: {splits}")
-        # 修复：添加对 splits 是否为空的检查
-        if not splits:
-            print("没有生成有效的拆分线")
-            continue
-
-        for split_pair in splits:
-            try:
-                # 确保 split_pair 包含两个索引
-                if len(split_pair) != 2:
-                    continue
-
-                i, j = split_pair
-
-                print(
-                    f"尝试拆分: 局部索引({i}, {j}) -> 全局索引({indices[i] if i < len(indices) else 'N/A'}, {indices[j] if j < len(indices) else 'N/A'})")
-
-                # 拆分多边形（使用局部索引）
-                new_poly1, new_poly2 = split_polygon(poly, i, j)
-
-                # 检查拆分后多边形是否有效
-                if len(new_poly1) < 3 or len(new_poly2) < 3:
-                    print("拆分后多边形顶点数不足")
-                    continue
-
-                # 将局部索引转换回全局索引
-                if i in range(len(poly)) and j in range(len(poly)):
-                    # 确定拆分路径
-                    if i < j:
-                        path1 = indices[i:j + 1]
-                        path2 = indices[j:] + indices[:i + 1]
-                    else:
-                        path1 = indices[i:] + indices[:j + 1]
-                        path2 = indices[j:i + 1]
-
-                    # 创建两个新的索引序列
-                    indices1 = path1
-                    indices2 = path2
-
-                    # 检查索引序列是否有效（至少3个顶点）
-                    if len(indices1) < 3 or len(indices2) < 3:
-                        print(f"拆分后索引序列无效: {len(indices1)}, {len(indices2)}")
-                        continue
-
-                    print(f"拆分成功: 子多边形1索引 {indices1}")
-                    print(f"拆分成功: 子多边形2索引 {indices2}")
-
-                    # 创建新的分解
-                    new_decomposition = (
-                            current_decomposition[:idx] +
-                            [indices1, indices2] +
-                            current_decomposition[idx + 1:]
-                    )
-
-                    # 递归处理新分解
-                    new_decomps = recursive_split(
-                        part_indices, threshold, new_decomposition,
-                        depth + 1, max_depth, visited_states
-                    )
-
-                    for decomp in new_decomps:
-                        decompositions.append(decomp)
-
-            except Exception as e:
-                print(f"拆分过程中出错: {e}")
-                import traceback
-                traceback.print_exc()
-                continue
-
-        # 每个子多边形只尝试一次拆分
-        if decompositions:
-            break
-
-    # 如果没有找到分解，返回当前状态
-    if not decompositions:
-        return [current_decomposition]
-
-    return decompositions
-
-
-# 全局变量
-global_polygon = []  # 存储原始多边形的所有顶点
-
 
 def recursive_split_direct_global(part_global_indices, threshold=2.6, current_decomposition=None, depth=0, max_depth=10,
                                   visited_states=None):
@@ -671,70 +503,12 @@ def validate_global_split(original_global_indices, new_global_indices1, new_glob
 
     return True
 
-
-def find_concave_vertices_with_global_indices(global_indices, threshold=2.6):
-    """查找凹顶点，返回全局索引"""
-    global global_polygon
-    poly = [global_polygon[i] for i in global_indices]
-    local_concave = find_concave_vertices(poly, threshold)
-    return [global_indices[i] for i in local_concave]
-
-
 # 辅助函数
 def get_polygon_from_global_indices(global_indices):
     """从全局索引获取多边形"""
     global global_polygon
     return [global_polygon[i] for i in global_indices]
 
-
-def visualize_global_decomposition(decomposition, title="Polygon Decomposition"):
-    """可视化基于全局索引的分解"""
-    global global_polygon
-
-    fig, ax = plt.subplots(figsize=(10, 8))
-
-    # 绘制原始多边形
-    original_poly = np.array(global_polygon)
-    original_patch = patches.Polygon(original_poly, alpha=0.2, edgecolor='black',
-                                     facecolor='lightgray', linestyle='--', label='Original')
-    ax.add_patch(original_patch)
-
-    # 绘制每个子多边形
-    colors = []
-    patches_list = []
-
-    for i, global_indices in enumerate(decomposition):
-        poly_vertices = [global_polygon[idx] for idx in global_indices]
-        color = (random.random() * 0.7 + 0.3, random.random() * 0.7 + 0.3, random.random() * 0.7 + 0.3)
-
-        patch = patches.Polygon(poly_vertices, alpha=0.6, edgecolor='black',
-                                facecolor=color, linewidth=2)
-        patches_list.append(patch)
-
-        # 标记顶点编号（全局索引）
-        for idx in global_indices:
-            x, y = global_polygon[idx]
-            ax.text(x, y, f'{idx}', fontsize=8, ha='center', va='center',
-                    bbox=dict(boxstyle="circle,pad=0.2", facecolor='white', alpha=0.8))
-
-    collection = PatchCollection(patches_list, match_original=True)
-    ax.add_collection(collection)
-
-    # 设置图形
-    all_points = np.array(global_polygon)
-    x_min, y_min = all_points.min(axis=0) - 1
-    x_max, y_max = all_points.max(axis=0) + 1
-
-    ax.set_xlim(x_min, x_max)
-    ax.set_ylim(y_min, y_max)
-    ax.set_aspect('equal')
-    ax.grid(True, alpha=0.3)
-    ax.set_title(title, fontsize=14, fontweight='bold')
-
-    plt.tight_layout()
-    plt.show()
-
-###################################
 def recursive_split_direct_global(part_global_indices, threshold=2.6, current_decomposition=None,
                                   depth=0, max_depth=10, visited_states=None, split_history=None):
     """
@@ -949,7 +723,6 @@ def visualize_decomposition_with_history(decomposition, split_history,
     plt.show()
 
 
-# 修改后的主函数
 def main_with_split_history():
     global global_polygon
 
@@ -967,6 +740,7 @@ def main_with_split_history():
 
     print(f"\n找到 {len(results)} 种分解方案，其中 {len(unique_results)} 种唯一方案")
 
+    score_sort = []
     for i, (decomposition, split_history) in enumerate(unique_results):
         print(f"\n=== 唯一方案 {i + 1} ===")
         print(f"拆分步骤数: {len(split_history)}")
@@ -990,140 +764,28 @@ def main_with_split_history():
         visualize_decomposition_with_history(decomposition, split_history,
                                              title=f"Unique Decomposition {i + 1}")
 
-        score_sort = []
 
         polygons = [ [global_polygon[i] for i in indices] for indices in decomposition]
         polygons = [Polygon(poly) for poly in polygons]
         print(f"main_with_split_history polygons:{polygons} decomp:{decomposition}")
         #
         score_overall = get_aggregate_regularity(polygons)
-        print(f"方案 {i + 1}: {len(decomposition)} 个子多边形 综合评分:{score_overall}")
+        print(f"方案 {i + 1}: {len(decomposition)} 个子多边形 综合评分:{score_overall} ")
+        print(f"decomposition:{decomposition}") # decomposition:[[3, 4, 5, 6, 7, 8, 9], [9, 10, 0, 1, 2, 3]]
         score_sort.append({
             "polygon_index": i,
             "overall_score": score_overall
         })
 
-        # 按综合评分排序
-        score_sort.sort(key=lambda x: x["overall_score"], reverse=True)
-        # print(f"score_sort:{score_sort}")
-        for score in score_sort:
-            print(f"score:{score}")
-##########################################
-
-# 使用示例
-def main_direct_global():
-    global global_polygon
-
-    # 设置全局多边形
-    global_polygon = [(0, 0), (10, 0), (10, 5), (8, 8), (5, 10), (0, 10)]
-
-    # 初始全局索引（所有顶点）
-    initial_global_indices = list(range(len(global_polygon)))
-
-    print("开始递归拆分...")
-    decompositions = recursive_split_direct_global(initial_global_indices, threshold=2.6)
-
-    print(f"\n找到 {len(decompositions)} 种分解方案")
-
-    for i, decomp in enumerate(decompositions):
-        print(f"\n方案 {i + 1}:")
-        for j, global_indices in enumerate(decomp):
-            poly = get_polygon_from_global_indices(global_indices)
-            # area = polygon_area(poly)
-            concave_count = len(find_concave_vertices(poly, 2.6))
-            # print(f"  子多边形{j + 1}: {len(global_indices)}顶点, {concave_count}凹点, 面积{area:.2f}")
-            print(f"  子多边形{j + 1}: {len(global_indices)}顶点, {concave_count}凹点")
-
-        # 可视化
-        visualize_global_decomposition(decomp, title=f"Decomposition {i + 1}")
-def is_valid_split_line(polygon, i, j, threshold=160):
-    """完整检查拆分线是否有效"""
-    n = len(polygon)
-
-    # 1. 检查是否是多边形的边
-    if abs(i - j) % n == 1 or abs(i - j) % n == n - 1:
-        return False
-
-    # 2. 检查拆分线是否在多边形内部
-    if not is_line_inside_polygon(polygon, polygon[i], polygon[j]):
-        return False
-
-    # 3. 检查是否与其他边相交
-    if does_line_intersect_other_edges(polygon, i, j):
-        return False
-
-    # 4. 检查拆分后是否产生有效多边形
-    if not produces_valid_polygons(polygon, i, j):
-        return False
-
-    return True
-
-
-def is_line_inside_polygon(polygon, point1, point2):
-    """检查线段是否完全在多边形内部"""
-    # 检查端点
-    if not is_point_in_polygon(point1, polygon) or not is_point_in_polygon(point2, polygon):
-        return False
-
-    # 检查线段上的中间点
-    num_samples = 3
-    for k in range(1, num_samples):
-        t = k / num_samples
-        sample_point = (
-            point1[0] + t * (point2[0] - point1[0]),
-            point1[1] + t * (point2[1] - point1[1])
-        )
-        if not is_point_in_polygon(sample_point, polygon):
-            return False
-
-    return True
-
-
-def does_line_intersect_other_edges(polygon, i, j):
-    """检查拆分线是否与多边形的其他非相邻边相交"""
-    n = len(polygon)
-    line_start = polygon[i]
-    line_end = polygon[j]
-
-    for k in range(n):
-        next_k = (k + 1) % n
-        if k == i or k == j or next_k == i or next_k == j:
-            continue
-
-        edge_start = polygon[k]
-        edge_end = polygon[next_k]
-
-        if do_segments_intersect(line_start, line_end, edge_start, edge_end):
-            return True
-
-    return False
-
-
-def produces_valid_polygons(polygon, i, j):
-    """检查拆分后是否产生有效的多边形"""
-    try:
-        poly1, poly2 = split_polygon(polygon, i, j)
-        return len(poly1) >= 3 and len(poly2) >= 3
-    except:
-        return False
-
-
-def do_segments_intersect(a, b, c, d):
-    """检查两条线段是否相交"""
-
-    def cross_product(o, a, b):
-        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
-
-    o1 = cross_product(a, b, c)
-    o2 = cross_product(a, b, d)
-    o3 = cross_product(c, d, a)
-    o4 = cross_product(c, d, b)
-
-    if o1 * o2 < 0 and o3 * o4 < 0:
-        return True
-
-    return False
-
+    # 按综合评分排序
+    score_sort.sort(key=lambda x: x["overall_score"], reverse=True)
+    # print(f"score_sort:{score_sort}")
+    for score in score_sort:
+        print(f"score:{score}")
+    index_best = score_sort[0]['polygon_index']
+    decomp, history = unique_results[7]
+    print("index_best:", index_best)
+    visualize_decomposition_with_history(decomp, history)
 
 def is_point_in_polygon(point, polygon):
     """判断点是否在多边形内（使用射线法）"""
@@ -1145,237 +807,6 @@ def is_point_in_polygon(point, polygon):
 
     return inside
 
-
-def iterative_split(polygon, threshold=160, max_iterations=20):
-    """迭代版本的多边形拆分，避免递归死循环"""
-    decompositions = [[polygon]]
-    visited_states = set()
-
-    for iteration in range(max_iterations):
-        new_decompositions = []
-        any_improvement = False
-
-        for decomp in decompositions:
-            if is_decomposition_complete(decomp, threshold):
-                new_decompositions.append(decomp)
-                continue
-
-            improved = try_improve_decomposition(decomp, threshold, visited_states)
-            if improved:
-                new_decompositions.extend(improved)
-                any_improvement = True
-            else:
-                new_decompositions.append(decomp)
-
-        if not any_improvement:
-            break
-
-        decompositions = new_decompositions
-
-    return decompositions
-
-
-def is_decomposition_complete(decomposition, threshold):
-    """检查分解是否已完成"""
-    for poly in decomposition:
-        if len(find_concave_vertices(poly, threshold)) > 1:
-            return False
-    return True
-
-
-def try_improve_decomposition(decomposition, threshold, visited_states):
-    """尝试改进分解"""
-    improved_decomps = []
-
-    for idx, poly in enumerate(decomposition):
-        concave_verts = find_concave_vertices(poly, threshold)
-        if len(concave_verts) <= 1:
-            continue
-
-        splits = generate_promising_splits(poly, concave_verts, threshold)
-
-        for i, j in splits:
-            try:
-                poly1, poly2 = split_polygon(poly, i, j)
-                if len(poly1) < 3 or len(poly2) < 3:
-                    continue
-
-                new_decomp = decomposition[:idx] + [poly1, poly2] + decomposition[idx + 1:]
-
-                state_key = tuple(tuple(tuple(vertex) for vertex in poly) for poly in
-                                  sorted(new_decomp, key=lambda x: (len(x), tuple(x[0]) if x else (0, 0))))
-                if state_key in visited_states:
-                    continue
-
-                visited_states.add(state_key)
-                improved_decomps.append(new_decomp)
-                break
-
-            except:
-                continue
-
-    return improved_decomps
-
-
-def visualize_decomposition(polygon, decomposition):
-    """可视化分解结果"""
-    try:
-        import matplotlib.pyplot as plt
-        import matplotlib.patches as patches
-
-        fig, ax = plt.subplots(figsize=(10, 8))
-        colors = ['red', 'blue', 'green', 'orange', 'purple', 'brown']
-
-        # 绘制原始多边形
-        x = [p[0] for p in polygon] + [polygon[0][0]]
-        y = [p[1] for p in polygon] + [polygon[0][1]]
-        ax.plot(x, y, 'k-', linewidth=2, label='Original')
-
-        # 绘制分解后的子多边形
-        for i, poly in enumerate(decomposition):
-            color = colors[i % len(colors)]
-            poly_x = [p[0] for p in poly] + [poly[0][0]]
-            poly_y = [p[1] for p in poly] + [poly[0][1]]
-            ax.fill(poly_x, poly_y, alpha=0.3, color=color)
-            ax.plot(poly_x, poly_y, '-', color=color, linewidth=2, label=f'Part {i + 1}')
-
-        ax.axis('equal')
-        ax.legend()
-        plt.title(f'Polygon Decomposition ({len(decomposition)} parts)')
-        plt.show()
-
-    except ImportError:
-        print("Matplotlib not available for visualization")
-
-
-def recursive_split(global_polygon, part_indices, threshold=2.6, current_decomposition=None, depth=0, max_depth=10,
-                    visited_states=None):
-    """递归拆分多边形（使用索引表示部分），添加状态跟踪防止死循环"""
-    if visited_states is None:
-        visited_states = set()
-
-    if current_decomposition is None:
-        current_decomposition = [part_indices]
-
-    # 生成当前状态的唯一标识
-    state_key = tuple(
-        tuple(indices) for indices in sorted(current_decomposition, key=lambda x: (len(x), x[0] if x else 0)))
-    if state_key in visited_states:
-        return [current_decomposition]
-
-    visited_states.add(state_key)
-
-    # 检查终止条件
-    if depth > max_depth:
-        return [current_decomposition]
-
-    # 检查所有子多边形是否满足条件
-    all_valid = True
-    for indices in current_decomposition:
-        # 从全局多边形中提取当前部分的多边形
-        poly = [global_polygon[i] for i in indices]
-        if len(find_concave_vertices(poly, threshold)) > 1:
-            all_valid = False
-            break
-
-    if all_valid:
-        return [current_decomposition]
-
-    decompositions = []
-
-    # 遍历每个需要拆分的子多边形
-    for idx, indices in enumerate(current_decomposition):
-        # 从全局多边形中提取当前部分的多边形
-        poly = [global_polygon[i] for i in indices]
-        concave_verts = find_concave_vertices(poly, threshold)
-
-        if len(concave_verts) <= 1:
-            continue
-
-        # 生成拆分线（使用局部索引）
-        splits = generate_promising_splits(poly, concave_verts, threshold)
-
-        for i, j in splits:
-            try:
-                # 拆分多边形（使用局部索引）
-                new_poly1, new_poly2 = split_polygon(poly, i, j)
-
-                # 检查拆分后多边形是否有效
-                if len(new_poly1) < 3 or len(new_poly2) < 3:
-                    continue
-
-                # 将局部索引转换回全局索引
-                # 注意：这里需要根据拆分后的顶点重新映射到全局索引
-                # 由于拆分会产生新顶点，我们需要特殊处理这种情况
-
-                # 方法1：如果拆分不产生新顶点（对角线拆分）
-                if i in range(len(poly)) and j in range(len(poly)):
-                    # 对角线拆分，不产生新顶点
-                    # 将局部索引转换回全局索引
-                    indices1 = []
-                    indices2 = []
-
-                    # 确定拆分路径
-                    if i < j:
-                        path1 = indices[i:j + 1]
-                        path2 = indices[j:] + indices[:i + 1]
-                    else:
-                        path1 = indices[i:] + indices[:j + 1]
-                        path2 = indices[j:i + 1]
-
-                    # 创建两个新的索引序列
-                    indices1 = path1
-                    indices2 = path2
-
-                    # 创建新的分解
-                    new_decomposition = (
-                            current_decomposition[:idx] +
-                            [indices1, indices2] +
-                            current_decomposition[idx + 1:]
-                    )
-
-                    # 递归处理新分解
-                    new_decomps = recursive_split(
-                        global_polygon, part_indices, new_decomposition,
-                        depth + 1, max_depth, visited_states
-                    )
-
-                    for decomp in new_decomps:
-                        decompositions.append(decomp)
-
-                # 方法2：如果拆分产生新顶点（需要特殊处理）
-                # 这里需要根据您的 split_polygon 实现来调整
-
-            except Exception as e:
-                continue
-
-        # 每个子多边形只尝试一次拆分
-        if decompositions:
-            break
-
-    # 如果没有找到分解，返回当前状态
-    if not decompositions:
-        return [current_decomposition]
-
-    return decompositions
-
-
-# 辅助函数：从索引序列获取多边形
-def get_polygon_from_indices(global_polygon, indices):
-    """从全局多边形和索引序列中提取多边形"""
-    return [global_polygon[i] for i in indices]
-
-def find_concave_vertices_with_indices(indices, threshold=2.6):
-    """查找凹顶点（使用索引）"""
-    global global_polygon
-    poly = [global_polygon[i] for i in indices]
-    return find_concave_vertices(poly, threshold)
-
-# 修改后的 generate_promising_splits 函数（接受索引）
-def generate_promising_splits_with_indices(global_polygon, indices, concave_verts, threshold=2.6):
-    """生成有希望的拆分线（使用索引）"""
-    poly = [global_polygon[i] for i in indices]
-    return generate_promising_splits(poly, concave_verts, threshold)
 def draw_polygon_with_concave(vertices, concave_verts, color='blue', alpha=0.5, label_offset=0.1):
     """
     绘制多边形并标注顶点索引
@@ -1435,54 +866,11 @@ def draw_polygon_with_concave(vertices, concave_verts, color='blue', alpha=0.5, 
     plt.axis('equal')  # 保持纵横比一致
     plt.show()
 
-
-def enhanced_evaluate_split_quality(self, split_polygons):
-    """
-    增强的拆分质量评估，包含形状规则性分析
-    """
-    if len(split_polygons) < 2:
-        return {"valid": False, "message": "未成功拆分"}
-
-    areas = [poly.area for poly in split_polygons]
-    total_area = sum(areas)
-
-    # 基础评估
-    area_ratio = min(areas) / max(areas) if max(areas) > 0 else 0
-    area_loss = abs(total_area - self.original_area) / self.original_area
-
-    # 形状规则性评估
-    shape_scores = []
-    shape_details = []
-
-    for poly in split_polygons:
-        regularity = calculate_shape_regularity(poly)
-        shape_scores.append(regularity.get("overall_score", 0))
-        shape_details.append(regularity)
-
-    avg_shape_score = np.mean(shape_scores)
-    min_shape_score = min(shape_scores)
-
-    # 综合评分
-    composite_score = (area_ratio * 0.4 + avg_shape_score * 0.4 +
-                       (1 - area_loss) * 0.2)
-
-    return {
-        "valid": area_loss < 0.01,
-        "area_ratio": area_ratio,
-        "avg_shape_score": avg_shape_score,
-        "min_shape_score": min_shape_score,
-        "area_loss": area_loss,
-        "num_parts": len(split_polygons),
-        "composite_score": composite_score,
-        "shape_details": shape_details,
-        "areas": areas
-    }
-
 #######################################################################
 # global_polygon0 = [(0, 0), (0.5, 0.5), (1.0, 0),(1.5, 0.5), (2.0, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-global_polygon2 = [(0, 0), (0.5, 0.5), (1.5, 0), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
+global_polygon = [(0, 0), (0.5, 0.5), (1.5, 0), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
 global_polygon1 = [(0, 0), (0.5, 0.2), (1.5, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-global_polygon = [(337.7, 585.1), (338.5, 581.7), (339.2, 578.3), (339.8, 574.8), (340.3, 571.3), (340.9, 567.8),
+global_polygon3 = [(337.7, 585.1), (338.5, 581.7), (339.2, 578.3), (339.8, 574.8), (340.3, 571.3), (340.9, 567.8),
                   (341.4, 564.2), (341.9, 560.7), (342.4, 557.3), (343.0, 553.8), (344.9, 543.2), (346.8, 532.4),
                   (348.9, 521.5), (351.1, 510.7), (353.6, 499.9), (356.4, 489.1), (359.6, 478.6), (363.1, 468.3),
                   (367.1, 458.2), (367.2, 461.9), (367.2, 465.6), (367.1, 469.3), (366.9, 473.0), (366.6, 476.8),
@@ -1503,176 +891,6 @@ global_polygon = [(337.7, 585.1), (338.5, 581.7), (339.2, 578.3), (339.8, 574.8)
                   (268.3, 593.2), (278.1, 591.7), (288.1, 590.4), (298.0, 589.2), (308.0, 588.1), (318.0, 587.1),
                   (327.9, 586.1)]
 
-
-def recursive_split(part_indices, threshold=2.6, current_decomposition=None, depth=0, max_depth=10,
-                    visited_states=None):
-    """递归拆分多边形（使用索引表示部分），添加状态跟踪防止死循环"""
-    global global_polygon
-
-    if visited_states is None:
-        visited_states = set()
-
-    if current_decomposition is None:
-        current_decomposition = [part_indices]
-
-    # 生成当前状态的唯一标识
-    state_key = tuple(
-        tuple(indices) for indices in sorted(current_decomposition, key=lambda x: (len(x), x[0] if x else 0)))
-    if state_key in visited_states:
-        return [current_decomposition]
-
-    visited_states.add(state_key)
-
-    # 检查终止条件
-    if depth > max_depth:
-        return [current_decomposition]
-
-    # 检查所有子多边形是否满足条件
-    all_valid = True
-    for indices in current_decomposition:
-        if len(find_concave_vertices_with_indices(indices, threshold)) > 1:
-            all_valid = False
-            break
-
-    if all_valid:
-        return [current_decomposition]
-
-    decompositions = []
-
-    # 遍历每个需要拆分的子多边形
-    for idx, indices in enumerate(current_decomposition):
-        # 获取凹顶点（全局索引）
-        global_concave_verts = find_concave_vertices_with_indices(indices, threshold)
-
-        if len(global_concave_verts) <= 1:
-            continue
-
-        # 从全局多边形中提取当前部分的多边形
-        poly = [global_polygon[i] for i in indices]
-
-        # 将全局凹顶点索引转换为局部索引
-        local_concave_verts = []
-        for global_idx in global_concave_verts:
-            if global_idx in indices:
-                local_concave_verts.append(indices.index(global_idx))
-
-        # 生成拆分线（使用局部索引）
-        splits = generate_promising_splits(poly, local_concave_verts, threshold)
-
-        for i, j in splits:
-            try:
-                # 拆分多边形（使用局部索引）
-                new_poly1, new_poly2 = split_polygon(poly, i, j)
-
-                # 检查拆分后多边形是否有效
-                if len(new_poly1) < 3 or len(new_poly2) < 3:
-                    continue
-
-                # 将局部索引转换回全局索引
-                if i in range(len(poly)) and j in range(len(poly)):
-                    # 确定拆分路径
-                    if i < j:
-                        path1 = indices[i:j + 1]
-                        path2 = indices[j:] + indices[:i + 1]
-                    else:
-                        path1 = indices[i:] + indices[:j + 1]
-                        path2 = indices[j:i + 1]
-
-                    # 创建两个新的索引序列
-                    indices1 = path1
-                    indices2 = path2
-
-                    # 检查索引序列是否有效（至少3个顶点）
-                    if len(indices1) < 3 or len(indices2) < 3:
-                        continue
-
-                    # 创建新的分解
-                    new_decomposition = (
-                            current_decomposition[:idx] +
-                            [indices1, indices2] +
-                            current_decomposition[idx + 1:]
-                    )
-                    print(f"recursive_split new_decomposition:{new_decomposition}")
-                    # 递归处理新分解
-                    new_decomps = recursive_split(
-                        part_indices, threshold, new_decomposition,
-                        depth + 1, max_depth, visited_states
-                    )
-
-                    for decomp in new_decomps:
-                        decompositions.append(decomp)
-
-            except Exception as e:
-                print(f"拆分过程中出错: {e}")
-                continue
-
-        # 每个子多边形只尝试一次拆分
-        if decompositions:
-            break
-
-    # 如果没有找到分解，返回当前状态
-    if not decompositions:
-        return [current_decomposition]
-
-    return decompositions
-def get_polygon_from_indices(indices):
-    """从全局多边形和索引序列中提取多边形"""
-    global global_polygon
-    return [global_polygon[i] for i in indices]
-
-# 辅助函数：检查多边形是否凸（使用索引）
-def is_convex_from_indices(indices, threshold=2.6):
-    """检查多边形是否凸（使用索引）"""
-    global global_polygon
-    poly = [global_polygon[i] for i in indices]
-    return len(find_concave_vertices(poly, threshold)) == 0
-
-# 使用示例
-def main():
-    test_polygon = global_polygon
-    print("原始多边形顶点:", test_polygon)
-
-    threashold_set = 150/180.0 * math.pi # 弧度角
-    # 查找凹顶点
-    # concave_verts = find_concave_vertices(test_polygon, threshold=math.pi)#ok
-    concave_verts = find_concave_vertices(test_polygon, threshold=threashold_set)#外∠更凹，外∠越小，越凹，angle就越小
-    print("凹顶点索引:", concave_verts)
-    print("凹顶点坐标:", [test_polygon[i] for i in concave_verts])
-    draw_polygon_with_concave(test_polygon, concave_verts, color='skyblue', alpha=0.7)
-    # return 0
-    print("-------------------------------------------------------------------------")
-    # 使用迭代版本进行拆分（更安全）
-    # decompositions = iterative_split(test_polygon, threshold=threashold_set)
-    decompositions = recursive_split(test_polygon, threshold=threashold_set)#容易死循环
-    score_sort = []
-    print(f"\n找到 {len(decompositions)} 种分解方案")
-    for i, decomp in enumerate(decompositions):
-        # print(f"decomp:{decomp}")
-        polygons = [Polygon(coords) for coords in decomp]
-        score_overall = get_aggregate_regularity(polygons)
-        print(f"方案 {i + 1}: {len(decomp)} 个子多边形 综合评分:{score_overall}")
-        score_sort.append({
-            "polygon_index": i,
-            "overall_score": score_overall
-        })
-        for j, poly in enumerate(decomp):
-            concave_count = len(find_concave_vertices(poly, threshold=threashold_set))
-            print(f"  子多边形 {j + 1}: {len(poly)} 顶点, {concave_count} 凹顶点")
-            print(f"main poly:{poly} decomp:{decomp}")
-    # 按综合评分排序
-    score_sort.sort(key=lambda x: x["overall_score"], reverse=True)
-    # print(f"score_sort:{score_sort}")
-    for score in score_sort:
-        print(f"score:{score}")
-
-    # 可视化第一个分解方案
-    if decompositions:
-        # visualize_decomposition(test_polygon, decompositions[26])
-        visualize_decomposition(test_polygon, decompositions[score_sort[0].get("polygon_index")])
-        # for i, decomp in enumerate(decompositions):
-        #     visualize_decomposition(test_polygon, decomp)
-
 # 使用示例
 if __name__ == "__main__":
     main_with_split_history()
-    # main()
