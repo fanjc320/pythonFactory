@@ -722,71 +722,6 @@ def visualize_decomposition_with_history(decomposition, split_history,
     plt.tight_layout()
     plt.show()
 
-
-def main_with_split_history():
-    global global_polygon
-
-    # 设置全局多边形
-    # global_polygon = [(0, 0), (10, 0), (10, 5), (8, 8), (5, 10), (0, 10)]
-
-    # 初始全局索引
-    initial_global_indices = list(range(len(global_polygon)))
-
-    print("开始递归拆分...")
-    results = recursive_split_direct_global(initial_global_indices, threshold=2.6)
-
-    # 移除重复的分解结果
-    unique_results = remove_duplicate_decompositions(results)
-
-    print(f"\n找到 {len(results)} 种分解方案，其中 {len(unique_results)} 种唯一方案")
-
-    score_sort = []
-    for i, (decomposition, split_history) in enumerate(unique_results):
-        print(f"\n=== 唯一方案 {i + 1} ===")
-        print(f"拆分步骤数: {len(split_history)}")
-        print(f"子多边形数量: {len(decomposition)}")
-
-        # 打印拆分历史
-        print_split_history(split_history)
-
-        # 打印最终分解
-        print("最终分解:")
-        for j, global_indices in enumerate(decomposition):
-            poly = get_polygon_from_global_indices(global_indices)
-            # area = polygon_area(poly)
-            concave_count = len(find_concave_vertices(poly, 2.6))
-            convex_status = "凸" if concave_count == 0 else "凹"
-            # print(f"  子多边形{j + 1}: {convex_status}, {len(global_indices)}顶点, {concave_count}凹点, 面积{area:.2f}")
-            print(f"  子多边形{j + 1}: {convex_status}, {len(global_indices)}顶点, {concave_count}凹点")
-            print(f"    顶点索引: {global_indices}")
-
-        # 可视化
-        visualize_decomposition_with_history(decomposition, split_history,
-                                             title=f"Unique Decomposition {i + 1}")
-
-
-        polygons = [ [global_polygon[i] for i in indices] for indices in decomposition]
-        polygons = [Polygon(poly) for poly in polygons]
-        print(f"main_with_split_history polygons:{polygons} decomp:{decomposition}")
-        #
-        score_overall = get_aggregate_regularity(polygons)
-        print(f"方案 {i + 1}: {len(decomposition)} 个子多边形 综合评分:{score_overall} ")
-        print(f"decomposition:{decomposition}") # decomposition:[[3, 4, 5, 6, 7, 8, 9], [9, 10, 0, 1, 2, 3]]
-        score_sort.append({
-            "polygon_index": i,
-            "overall_score": score_overall
-        })
-
-    # 按综合评分排序
-    score_sort.sort(key=lambda x: x["overall_score"], reverse=True)
-    # print(f"score_sort:{score_sort}")
-    for score in score_sort:
-        print(f"score:{score}")
-    index_best = score_sort[0]['polygon_index']
-    decomp, history = unique_results[7]
-    print("index_best:", index_best)
-    visualize_decomposition_with_history(decomp, history)
-
 def is_point_in_polygon(point, polygon):
     """判断点是否在多边形内（使用射线法）"""
     x, y = point
@@ -868,9 +803,9 @@ def draw_polygon_with_concave(vertices, concave_verts, color='blue', alpha=0.5, 
 
 #######################################################################
 # global_polygon0 = [(0, 0), (0.5, 0.5), (1.0, 0),(1.5, 0.5), (2.0, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-global_polygon = [(0, 0), (0.5, 0.5), (1.5, 0), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
+global_polygon2 = [(0, 0), (0.5, 0.5), (1.5, 0), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
 global_polygon1 = [(0, 0), (0.5, 0.2), (1.5, 0.5), (2.5, 0.2), (3, 0), (3, 1), (2, 1), (2, 2), (1, 2), (1, 1), (0, 1)]
-global_polygon3 = [(337.7, 585.1), (338.5, 581.7), (339.2, 578.3), (339.8, 574.8), (340.3, 571.3), (340.9, 567.8),
+global_polygon = [(337.7, 585.1), (338.5, 581.7), (339.2, 578.3), (339.8, 574.8), (340.3, 571.3), (340.9, 567.8),
                   (341.4, 564.2), (341.9, 560.7), (342.4, 557.3), (343.0, 553.8), (344.9, 543.2), (346.8, 532.4),
                   (348.9, 521.5), (351.1, 510.7), (353.6, 499.9), (356.4, 489.1), (359.6, 478.6), (363.1, 468.3),
                   (367.1, 458.2), (367.2, 461.9), (367.2, 465.6), (367.1, 469.3), (366.9, 473.0), (366.6, 476.8),
@@ -890,6 +825,66 @@ global_polygon3 = [(337.7, 585.1), (338.5, 581.7), (339.2, 578.3), (339.8, 574.8
 
                   (268.3, 593.2), (278.1, 591.7), (288.1, 590.4), (298.0, 589.2), (308.0, 588.1), (318.0, 587.1),
                   (327.9, 586.1)]
+
+
+def main_with_split_history():
+    global global_polygon
+    # 初始全局索引
+    initial_global_indices = list(range(len(global_polygon)))
+
+    print("开始递归拆分...")
+    results = recursive_split_direct_global(initial_global_indices, threshold=2.6)
+
+    # 移除重复的分解结果
+    unique_results = remove_duplicate_decompositions(results)
+
+    print(f"\n找到 {len(results)} 种分解方案，其中 {len(unique_results)} 种唯一方案")
+
+    score_sort = []
+    for i, (decomposition, split_history) in enumerate(unique_results):
+        print(f"\n=== 唯一方案 {i + 1} ===")
+        print(f"拆分步骤数: {len(split_history)}")
+        print(f"子多边形数量: {len(decomposition)}")
+
+        # 打印拆分历史
+        print_split_history(split_history)
+
+        # 打印最终分解
+        print("最终分解:")
+        for j, global_indices in enumerate(decomposition):
+            poly = get_polygon_from_global_indices(global_indices)
+            # area = polygon_area(poly)
+            concave_count = len(find_concave_vertices(poly, 2.6))
+            convex_status = "凸" if concave_count == 0 else "凹"
+            # print(f"  子多边形{j + 1}: {convex_status}, {len(global_indices)}顶点, {concave_count}凹点, 面积{area:.2f}")
+            print(f"  子多边形{j + 1}: {convex_status}, {len(global_indices)}顶点, {concave_count}凹点")
+            print(f"    顶点索引: {global_indices}")
+
+        # 可视化
+        # visualize_decomposition_with_history(decomposition, split_history,
+        #                                      title=f"Unique Decomposition {i + 1}")
+
+
+        polygons = [ [global_polygon[i] for i in indices] for indices in decomposition]
+        polygons = [Polygon(poly) for poly in polygons]
+        print(f"main_with_split_history polygons:{polygons} decomp:{decomposition}")
+        #
+        score_overall = get_aggregate_regularity(polygons)
+        print(f"方案 {i + 1}: {len(decomposition)} 个子多边形 综合评分:{score_overall} ")
+        print(f"decomposition:{decomposition}") # decomposition:[[3, 4, 5, 6, 7, 8, 9], [9, 10, 0, 1, 2, 3]]
+        score_sort.append({
+            "polygon_index": i,
+            "overall_score": score_overall
+        })
+
+    # 按综合评分排序
+    score_sort.sort(key=lambda x: x["overall_score"], reverse=True)
+    for score in score_sort:
+        print(f"score:{score}")
+    index_best = score_sort[0]['polygon_index']
+    decomp, history = unique_results[7]
+    print("index_best:", index_best)
+    visualize_decomposition_with_history(decomp, history)
 
 # 使用示例
 if __name__ == "__main__":
